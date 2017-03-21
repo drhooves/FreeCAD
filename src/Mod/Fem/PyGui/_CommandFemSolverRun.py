@@ -30,6 +30,7 @@ __url__ = "http://www.freecadweb.org"
 from .FemCommands import FemCommands
 import FreeCADGui
 from PySide import QtCore, QtGui
+import FemGui
 
 
 class _CommandFemSolverRun(FemCommands):
@@ -60,6 +61,13 @@ class _CommandFemSolverRun(FemCommands):
             if message:
                 QtGui.QMessageBox.critical(None, "Missing prerequisite", message)
                 return
+            self.fea.finished.connect(load_results)
+            QtCore.QThreadPool.globalInstance().start(self.fea)
+        elif self.solver.SolverType == "FemSolverElmer":
+            import FemToolsElmer
+            analysis = FemGui.getActiveAnalysis()
+            self.fea = FemToolsElmer.FemToolsElmer(analysis, self.solver)
+            self.fea.reset_mesh_purge_results_checked()
             self.fea.finished.connect(load_results)
             QtCore.QThreadPool.globalInstance().start(self.fea)
         elif self.solver.SolverType == "FemSolverZ88":

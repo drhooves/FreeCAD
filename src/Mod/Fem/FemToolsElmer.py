@@ -88,12 +88,16 @@ class FemToolsElmer(FemTools.FemTools):
                 self.selfweight_constraints, self.force_constraints,
                 self.pressure_constraints, self.temperature_constraints,
                 self.heatflux_constraints, self.initialtemperature_constraints,
-                self.beam_sections, self.shell_thicknesses, self.fluid_sections)
+                self.beam_sections, self.shell_thicknesses, self.fluid_sections,
+                self.elmer_free_text)
         writer.write_all(self.SIF_NAME, working_dir)
 
     def is_analysis_valid(self):
         if self.mesh is None:
             print "Mesh object missing."
+            return False
+        if self.elmer_free_text.Text == "":
+            print("Analysis without FreeText not jet supported!")
             return False
         return True
 

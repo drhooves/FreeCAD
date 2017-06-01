@@ -42,8 +42,6 @@ class _FemSolverElmer(object):
                 "Fem", "Working directory for calculations.")
         obj.addProperty("App::PropertyEnumeration", "AnalysisType",
                 "Fem", "Type of the analysis.")
-        obj.addProperty("App::PropertyLength", "Length",
-                "Fem", "Type of the analysis.")
 
         # Set default values for properties.
         obj.SolverType = self.solverType

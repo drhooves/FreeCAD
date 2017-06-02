@@ -28,6 +28,7 @@ __url__ = "http://www.freecadweb.org"
 #  @{
 
 import os
+import os.path
 import sys
 import subprocess
 import shutil
@@ -35,13 +36,62 @@ from PySide import QtCore
 from PySide import QtGui
 
 import FreeCAD as App
+from FreeCAD import Console
 import FemTools
 import FemInputWriterElmer
 
 
+err_lookup = {
+    "wd_non_existent" : "Working directory {} doesn't exist.",
+    "wd_not_dir" : "Working directory {} is not a directory.",
+    "wd_name_conflict" : "Working directory {} invalid",
+    "cd_create_error" : "Error creating case directory: {}",
+    "create_inp_failed" : "Failed to create input files: {}",
+    "exec_solver_failed" : "Solver execution failed with exit code: {}",
+    "mesh_missing" : "Mesh object missing.",
+    "no_freetext" : "Analysis without FreeText not jet supported!",
+    "freetext_empty" : "FreeText must not be empty.",
+}
+
+
+def runSolver(analysis, solver):
+    fea = FemToolsElmer(analysis, solver)
+    fea.finished.connect(_solverFinished)
+    QtCore.QThreadPool.globalInstance().start(fea)
+
+
+def _solverFinished(status):
+    Console.PrintLog(status.meshLog)
+    Console.PrintLog(status.solverLog)
+    if not status.success:
+        Console.PrintMessage("Solver execution failed.\n")
+        status.printErrorList(err_lookup)
+
+
+class _Status(object):
+
+    def __init__(self):
+        self._success = True
+        self.meshLog = ""
+        self.solverLog = ""
+        self.errorList = []
+
+    @property
+    def success(self):
+        return self._success
+
+    def error(self, err, *args):
+        self._success = False
+        self.errorList.append((err, args))
+
+    def printErrorList(self, lookup):
+        for err_id, args in self.errorList:
+            Console.PrintError(lookup[err_id].format(*args) + "\n")
+
+
 class FemToolsElmer(FemTools.FemTools):
 
-    finished = QtCore.Signal(int)
+    finished = QtCore.Signal(object)
     SIF_NAME = "case.sif"
 
     def __init__(self, analysis, solver):
@@ -57,29 +107,34 @@ class FemToolsElmer(FemTools.FemTools):
         return subprocess.Popen([binary], cwd=working_dir).wait()
 
     def run(self):
-        binary = self.find_elmer_binary()
-        if binary is None:
-            print("Error: Couldn't find elmer binary.")
-            return
-        if self.is_analysis_valid():
-            working_dir = self.get_working_dir()
-            is_temp = False
+        status = _Status()
+        binary = self._check_elmer_binary(status)
+        working_dir = self._check_working_dir(status)
+        self._check_analysis(status)
+
+        delete_wd = False
+        progress_bar = App.Base.ProgressIndicator()
+        if status.success:
+            progress_bar.start("Executing Simulation...", 0)
             if not working_dir:
                 working_dir = tempfile.mkdtemp()
-                is_temp = True
-            self.prepare_case_dir(working_dir)
-            progress_bar = App.Base.ProgressIndicator()
-            progress_bar.start("Running ElmerSolver...", 0)
+                delete_wd = True
+            try: self.write_input_files(working_dir)
+            except OSError as e:
+                status.error("create_inp_failed", e.strerror)
             ret_code = self.start_elmer(binary, working_dir)
-            self.finished.emit(ret_code)
-            if is_temp:
-                shutil.rmtree(working_dir)
-            progress_bar.stop()
+            if ret_code != 0:
+                status.error("exec_solver_failed", e.strerror)
+
+        progress_bar.stop()
+        if delete_wd:
+            shutil.rmtree(working_dir)
+        self.finished.emit(status)
 
     def find_elmer_binary(self):
         return "ElmerSolver"
 
-    def prepare_case_dir(self, working_dir):
+    def write_input_files(self, working_dir):
         writer = FemInputWriterElmer.Writer(
                 self.analysis, self.solver, self.mesh, self.materials_linear,
                 self.materials_nonlinear, self.fixed_constraints,
@@ -92,14 +147,39 @@ class FemToolsElmer(FemTools.FemTools):
                 self.elmer_free_text)
         writer.write_all(self.SIF_NAME, working_dir)
 
-    def is_analysis_valid(self):
+    def _check_analysis(self, status):
         if self.mesh is None:
-            print "Mesh object missing."
-            return False
-        if self.elmer_free_text.Text == "":
-            print("Analysis without FreeText not jet supported!")
-            return False
-        return True
+            status.error("mesh_missing")
+        if self.elmer_free_text is None:
+            status.error("no_freetext")
+        elif self.elmer_free_text.Text == "":
+            status.error("freetext_empty")
+
+    def _check_elmer_binary(self, status):
+        binary = self.find_elmer_binary()
+        if binary is None:
+            status.failed("Couldn't find elmer binary.")
+            return None
+        return binary
+
+    def _check_working_dir(self, status):
+        working_dir = self.get_working_dir()
+        if not os.path.exists(working_dir):
+            status.error("wd_non_existent", working_dir)
+            return None
+        if not os.path.isdir(working_dir):
+            status.error("wd_not_dir", working_dir)
+            return None
+        case_dir = os.path.join(working_dir, self.analysis.Label)
+        if os.path.exists(case_dir) and not os.path.isdir(case_dir):
+            status.error("wd_name_conflict", working_dir)
+            return None
+        if not os.path.exists(case_dir):
+            try: os.mkdir(case_dir)
+            except OSError as e:
+                status.error("cd_create_error", e.strerror)
+                return None
+        return case_dir
 
     def get_working_dir(self):
         fem_prefs = App.ParamGet(

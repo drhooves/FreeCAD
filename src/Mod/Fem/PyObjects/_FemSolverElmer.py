@@ -29,13 +29,18 @@ class _FemSolverElmer(object):
     """Proxy for FemSolverElmers Document Object."""
 
     solverType = "FemSolverElmer"
+    Type = ""
 
     def __init__(self, obj):
-        # Initialize FeaturePython with this Proxy.
         obj.Proxy = self
 
-        # attr = Prop_ReadOnly
+        # Prop_None     = 0
+        # Prop_ReadOnly = 1
+        # Prop_Transient= 2
+        # Prop_Hidden   = 4
+        # Prop_Output   = 8
         attr = 1
+
         obj.addProperty("App::PropertyString", "SolverType",
                 "Base", "Type of the solver.", attr)
         obj.addProperty("App::PropertyPath", "WorkingDir",

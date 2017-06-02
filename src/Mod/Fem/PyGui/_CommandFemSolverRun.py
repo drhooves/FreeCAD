@@ -28,6 +28,7 @@ __url__ = "http://www.freecadweb.org"
 #  \ingroup FEM
 
 from .FemCommands import FemCommands
+import FreeCAD
 import FreeCADGui
 from PySide import QtCore, QtGui
 import FemGui
@@ -64,12 +65,14 @@ class _CommandFemSolverRun(FemCommands):
             self.fea.finished.connect(load_results)
             QtCore.QThreadPool.globalInstance().start(self.fea)
         elif self.solver.SolverType == "FemSolverElmer":
-            import FemToolsElmer
+            doc = FreeCAD.activeDocument()
             analysis = FemGui.getActiveAnalysis()
-            self.fea = FemToolsElmer.FemToolsElmer(analysis, self.solver)
-            self.fea.reset_mesh_purge_results_checked()
-            self.fea.finished.connect(load_results)
-            QtCore.QThreadPool.globalInstance().start(self.fea)
+            FreeCADGui.addModule("FemToolsElmer")
+            FreeCADGui.doCommand(
+                    "FemToolsElmer.runSolver("
+                    "App.getDocument('{0}').getObject('{1}'),"
+                    "App.getDocument('{0}').getObject('{2}'))"
+                    .format(doc.Name, analysis.Name, self.solver.Name))
         elif self.solver.SolverType == "FemSolverZ88":
             import FemToolsZ88
             self.fea = FemToolsZ88.FemToolsZ88(None, self.solver)

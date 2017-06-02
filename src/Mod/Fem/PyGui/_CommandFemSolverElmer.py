@@ -27,10 +27,12 @@ __url__ = "http://www.freecadweb.org"
 ## @package CommandFemSolverElmer
 #  \ingroup FEM
 
+from PySide import QtCore
+
 import FreeCAD as App
 import FreeCADGui as Gui
+import FemGui
 from FemCommands import FemCommands
-from PySide import QtCore
 
 
 class _CommandFemSolverElmer(FemCommands):
@@ -49,12 +51,15 @@ class _CommandFemSolverElmer(FemCommands):
         self.is_active = 'with_analysis'
 
     def Activated(self):
+        doc = App.activeDocument()
+        analysis = FemGui.getActiveAnalysis()
+
         App.ActiveDocument.openTransaction("Create SolverElmer")
         Gui.addModule("ObjectsFem")
-        Gui.addModule("FemGui")
         Gui.doCommand(
-                "FemGui.getActiveAnalysis().Member += "
-                "[ObjectsFem.makeSolverElmer()]")
+                "App.getDocument('{}').getObject('{}').Member +="
+                "[ObjectsFem.makeSolverElmer()]"
+                .format(doc.Name, analysis.Name))
         App.ActiveDocument.commitTransaction()
         App.ActiveDocument.recompute()
 

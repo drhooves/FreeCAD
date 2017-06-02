@@ -51,6 +51,7 @@ class _CommandFemSolverElmer(FemCommands):
     def Activated(self):
         App.ActiveDocument.openTransaction("Create SolverElmer")
         Gui.addModule("ObjectsFem")
+        Gui.addModule("FemGui")
         Gui.doCommand(
                 "FemGui.getActiveAnalysis().Member += "
                 "[ObjectsFem.makeSolverElmer()]")

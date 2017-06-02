@@ -51,6 +51,7 @@ class _CommandElmerFreeText(FemCommands):
     def Activated(self):
         App.ActiveDocument.openTransaction("Create FreeText")
         Gui.addModule("ObjectsFem")
+        Gui.addModule("FemGui")
         Gui.doCommand(
                 "FemGui.getActiveAnalysis().Member += "
                 "[ObjectsFem.makeElmerFreeText()]")

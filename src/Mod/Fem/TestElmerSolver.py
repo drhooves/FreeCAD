@@ -25,8 +25,10 @@ __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
+import os.path
 import unittest
 import tempfile
+import shutil
 
 import FreeCAD as App
 from PySide import QtCore
@@ -40,22 +42,37 @@ if App.GuiUp:
     import FemGui
 
 
-def Gui():
-    classes = []
+def GuiSuite():
+    classes = [TestCantileverGui]
     return _loadFromClasses(classes)
 
 
-def Cmd():
-    classes = [TestSolverObject]
+def AppSuite():
+    classes = [TestSolverObject, TestCantileverApp]
     return _loadFromClasses(classes)
 
 
 def All():
     allSuite = unittest.TestSuite()
-    allSuite.addTest(Cmd())
+    allSuite.addTest(AppSuite())
     if App.GuiUp:
-        allSuite.addTest(Gui())
+        allSuite.addTest(GuiSuite())
     return allSuite
+
+
+def runGui():
+    suite = GuiSuite()
+    unittest.TextTestRunner().run(suite)
+
+
+def runApp():
+    suite = AppSuite()
+    unittest.TextTestRunner().run(suite)
+
+
+def runAll():
+    suite = All()
+    unittest.TextTestRunner().run(suite)
 
 
 def _loadFromClasses(classes):
@@ -92,43 +109,117 @@ class TestSolverObject(unittest.TestCase):
         self.assertEqual(self.solver.SolverType, "FemSolverElmer")
 
 
-class TestCompleteFreeText(unittest.TestCase):
+class TestCantileverApp(unittest.TestCase):
 
     def setUp(self):
         self.doc = App.newDocument()
+        self.mesh = _makeCantileverMesh()
+        self.solver = ObjectsFem.makeSolverElmer()
+        self.freetext = ObjectsFem.makeElmerFreeText()
+        self.analysis = ObjectsFem.makeAnalysis()
+        self.analysis.Member += [self.mesh, self.solver, self.freetext]
+        self.freetext.Text = sif_file
 
     def tearDown(self):
         App.closeDocument(self.doc.Name)
 
-    def testCantilever(self):
-        mesh = self._makeMesh()
-        solver = ObjectsFem.makeSolverElmer()
-        freetext = ObjectsFem.makeElmerFreeText()
-        analysis = ObjectsFem.makeAnalysis()
-        analysis.Member += [mesh, solver, freetext]
-        freetext.Text = sif_file
-        FemToolsElmer.runSolver(analysis, solver)
+    def testSpecificDir(self):
+        try:
+            caseDir = tempfile.mkdtemp()
+            FemToolsElmer.runSolver(self.analysis, self.solver, caseDir)
+            QtCore.QThreadPool.globalInstance().waitForDone()
+            self._checkResult(caseDir)
+        finally:
+            shutil.rmtree(caseDir)
+
+    def _checkResult(self, caseDir):
+        self.assertTrue(os.path.isdir(caseDir))
+        result1 = os.path.join(caseDir, "case0001.vtu")
+        result2 = os.path.join(caseDir, "case0002.vtu")
+        self.assertTrue(os.path.isfile(result1))
+        self.assertTrue(os.path.isfile(result2))
+        self.assertGreater(os.path.getsize(result1), 10e3)
+        self.assertGreater(os.path.getsize(result2), 10e3)
+
+
+class TestCantileverGui(unittest.TestCase):
+
+    ELMER_NAME = "Elmer"
+    ANALYSIS_NAME = "Analysis"
+
+    def setUp(self):
+        self.doc = App.newDocument()
+        self.prevSetting = (App.ParamGet(
+                "User parameter:BaseApp/Preferences/Mod/Fem/General")
+                .GetString("WorkingDir"))
+        try:
+            Gui.activateWorkbench("FemWorkbench")
+            Gui.runCommand("FEM_Analysis")
+            Gui.runCommand("FEM_SolverElmer")
+            Gui.runCommand("FEM_ElmerFreeText")
+            self.analysis = App.ActiveDocument.getObject(self.ANALYSIS_NAME)
+            self.solver = App.ActiveDocument.getObject(self.ELMER_NAME)
+            self.analysis.Member += [_makeCantileverMesh()]
+        except:
+            self.tearDown()
+            raise
+
+    def tearDown(self):
+        (App.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")
+                .SetString("WorkingDir", self.prevSetting))
+        App.closeDocument(self.doc.Name)
+
+    def testWithSetting(self):
+        try:
+            workingDir = tempfile.mkdtemp()
+            (App.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")
+                    .SetString("WorkingDir", workingDir))
+            self._runTest()
+            caseDir = os.path.join(workingDir, self.analysis.Label)
+            self._checkResult(caseDir)
+        finally:
+            shutil.rmtree(caseDir)
+
+    def _runTest(self):
+        Gui.Selection.clearSelection()
+        Gui.Selection.addSelection(self.solver)
+        Gui.runCommand("FEM_SolverRun")
         QtCore.QThreadPool.globalInstance().waitForDone()
 
-    def _makeMesh(self):
-        geo = App.ActiveDocument.addObject("Part::Box")
-        geo.Length = 8000
-        geo.Width = 1000
-        geo.Height = 1000
-        mesh = ObjectsFem.makeMeshGmsh()
-        mesh.Part = geo
+    def _checkResult(self, caseDir):
+        self.assertTrue(os.path.isdir(caseDir))
+        result1 = os.path.join(caseDir, "case0001.vtu")
+        result2 = os.path.join(caseDir, "case0002.vtu")
+        self.assertTrue(
+                os.path.isfile(result1),
+                "{} is not a file.".format(result1))
+        self.assertTrue(
+                os.path.isfile(result2),
+                "{} is not a file.".format(result2))
+        self.assertGreater(os.path.getsize(result1), 10e3)
+        self.assertGreater(os.path.getsize(result2), 10e3)
 
-        fixedGroup = ObjectsFem.makeMeshGroup(mesh, name="Fixed")
-        fixedGroup.References += [(geo, ('Face1',))]
-        forceGroup = ObjectsFem.makeMeshGroup(mesh, name="Force")
-        forceGroup.References += [(geo, ('Face2',))]
-        bodyGroup = ObjectsFem.makeMeshGroup(mesh, name="Body")
-        bodyGroup.References += [(geo, ('Solid1',))]
 
-        tools = FemGmshTools.FemGmshTools(mesh)
-        tools.create_mesh()
+def _makeCantileverMesh():
+    geo = App.ActiveDocument.addObject("Part::Box")
+    geo.Length = 8000
+    geo.Width = 1000
+    geo.Height = 1000
+    mesh = ObjectsFem.makeMeshGmsh()
+    mesh.Part = geo
 
-        return mesh
+    fixedGroup = ObjectsFem.makeMeshGroup(mesh, name="Fixed")
+    fixedGroup.References += [(geo, ('Face1',))]
+    forceGroup = ObjectsFem.makeMeshGroup(mesh, name="Force")
+    forceGroup.References += [(geo, ('Face2',))]
+    bodyGroup = ObjectsFem.makeMeshGroup(mesh, name="Body")
+    bodyGroup.References += [(geo, ('Solid1',))]
+
+    tools = FemGmshTools.FemGmshTools(mesh)
+    tools.create_mesh()
+
+    return mesh
+
 
 sif_file = """
 Header

@@ -32,6 +32,7 @@ import os.path
 import sys
 import subprocess
 import shutil
+import tempfile
 from PySide import QtCore
 from PySide import QtGui
 
@@ -42,10 +43,8 @@ import FemInputWriterElmer
 
 
 err_lookup = {
-    "wd_non_existent" : "Working directory {} doesn't exist.",
-    "wd_not_dir" : "Working directory {} is not a directory.",
-    "wd_name_conflict" : "Working directory {} invalid",
-    "cd_create_error" : "Error creating case directory: {}",
+    "cd_non_existent" : "Case directory {} doesn't exist.",
+    "cd_not_dir" : "Case directory {} is not a directory.",
     "create_inp_failed" : "Failed to create input files: {}",
     "exec_solver_failed" : "Solver execution failed with exit code: {}",
     "mesh_missing" : "Mesh object missing.",
@@ -54,10 +53,55 @@ err_lookup = {
 }
 
 
-def runSolver(analysis, solver):
-    fea = FemToolsElmer(analysis, solver)
+def runSolver(analysis, solver, caseDir=None):
+    isTemp = False
+    if not caseDir:
+        isTemp, caseDir = _getCaseDir(analysis)
+    Console.PrintMessage("Case directory path: {}\n".format(caseDir))
+    fea = FemToolsElmer(analysis, solver, caseDir)
     fea.finished.connect(_solverFinished)
     QtCore.QThreadPool.globalInstance().start(fea)
+    if isTemp:
+        shutil.rmtree(caseDir)
+
+
+def _getCaseDir(analysis):
+    case_dir = _createCaseDirFromSettings(analysis.Label)
+    if case_dir:
+        Console.PrintMessage("Use working directory from settings.\n")
+        return False, case_dir
+    Console.PrintMessage("Use temporary case directory.\n")
+    return True, tempfile.mkdtemp()
+
+
+def _createCaseDirFromSettings(name):
+    workingDir = (App.ParamGet(
+        "User parameter:BaseApp/Preferences/Mod/Fem/General")
+        .GetString("WorkingDir"))
+    if not os.path.exists(workingDir):
+        Console.PrintWarning(
+                "Working directory {} doesn't exist.\n"
+                .format(workingDir))
+        return ""
+    if not os.path.isdir(workingDir):
+        Console.PrintWarning(
+                "Working directory {} not a directory.\n"
+                .format(workingDir))
+        return ""
+    caseDir = os.path.join(workingDir, name)
+    if os.path.exists(caseDir) and not os.path.isdir(caseDir):
+        Console.PrintWarning(
+                "Can't use {}. Not a directory.\n"
+                .format(caseDir))
+        return ""
+    if not os.path.exists(caseDir):
+        try: os.mkdir(caseDir)
+        except OSError as e:
+            Console.PrintWarning(
+                    "Couldn't create directory {}: {}\n"
+                    .format(caseDir, e.strerror))
+            return ""
+    return caseDir
 
 
 def _solverFinished(status):
@@ -94,13 +138,14 @@ class FemToolsElmer(FemTools.FemTools):
     finished = QtCore.Signal(object)
     SIF_NAME = "case.sif"
 
-    def __init__(self, analysis, solver):
+    def __init__(self, analysis, solver, case_dir):
         if analysis is None: raise Exception("Analysis must not be None.")
         if solver is None: raise Exception("Solver must not be None.")
         QtCore.QRunnable.__init__(self)
         QtCore.QObject.__init__(self)
         self.analysis = analysis
         self.solver = solver
+        self.case_dir = case_dir
         self.update_objects()
 
     def start_elmer(self, binary, working_dir):
@@ -109,7 +154,7 @@ class FemToolsElmer(FemTools.FemTools):
     def run(self):
         status = _Status()
         binary = self._check_elmer_binary(status)
-        working_dir = self._check_working_dir(status)
+        self._check_case_dir(status)
         self._check_analysis(status)
 
         delete_wd = False
@@ -127,8 +172,6 @@ class FemToolsElmer(FemTools.FemTools):
                 status.error("exec_solver_failed", e.strerror)
 
         progress_bar.stop()
-        if delete_wd:
-            shutil.rmtree(working_dir)
         self.finished.emit(status)
 
     def find_elmer_binary(self):
@@ -162,32 +205,13 @@ class FemToolsElmer(FemTools.FemTools):
             return None
         return binary
 
-    def _check_working_dir(self, status):
-        working_dir = self.get_working_dir()
-        if not os.path.exists(working_dir):
-            status.error("wd_non_existent", working_dir)
+    def _check_case_dir(self, status):
+        if not os.path.exists(self.case_dir):
+            status.error("cd_non_existent", self.case_dir)
             return None
-        if not os.path.isdir(working_dir):
-            status.error("wd_not_dir", working_dir)
+        if not os.path.isdir(self.case_dir):
+            status.error("cd_not_dir", self.case_dir)
             return None
-        case_dir = os.path.join(working_dir, self.analysis.Label)
-        if os.path.exists(case_dir) and not os.path.isdir(case_dir):
-            status.error("wd_name_conflict", working_dir)
-            return None
-        if not os.path.exists(case_dir):
-            try: os.mkdir(case_dir)
-            except OSError as e:
-                status.error("cd_create_error", e.strerror)
-                return None
-        return case_dir
-
-    def get_working_dir(self):
-        fem_prefs = App.ParamGet(
-                "User parameter:BaseApp/Preferences/Mod/Fem/General")
-        wd_setting = fem_prefs.GetString("WorkingDir")
-        if wd_setting:
-            return wd_setting
-        return tempfile.mkdtemp()
 
     def load_results(self):
         self.results_present = False

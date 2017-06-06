@@ -21,7 +21,7 @@
 # ***************************************************************************
 
 __title__ = "FemToolsElmer"
-__author__ = "Bernd Hahnebach, Markus Hovorka"
+__author__ = "Markus Hovorka, Bernd Hahnebach"
 __url__ = "http://www.freecadweb.org"
 
 

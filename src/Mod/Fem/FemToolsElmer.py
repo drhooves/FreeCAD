@@ -1,6 +1,6 @@
 # ***************************************************************************
 # *                                                                         *
-# *   Copyright (c) 2016 - Bernd Hahnebach <bernd@bimstatik.org>            *
+# *   Copyright (c) 2016 - Markus Hovorka <m.hovorka@live.de>               *
 # *                                                                         *
 # *   This program is free software; you can redistribute it and/or modify  *
 # *   it under the terms of the GNU Lesser General Public License (LGPL)    *
@@ -21,7 +21,7 @@
 # ***************************************************************************
 
 __title__ = "FemToolsElmer"
-__author__ = "Bernd Hahnebach, Markus Hovorka"
+__author__ = "Markus Hovorka, Bernd Hahnebach"
 __url__ = "http://www.freecadweb.org"
 
 ## \addtogroup FEM

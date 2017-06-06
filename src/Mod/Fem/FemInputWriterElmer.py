@@ -93,9 +93,10 @@ class Writer(FemInputWriter.FemInputWriter):
                 .format(working_dir))
         self.write_sif(sif_path)
         self.write_startinfo(sif_name, working_dir)
-        self.write_mesh(working_dir)
+        mesh_ret = self.write_mesh(working_dir)
         # self.write_contraints()
         # self.write_materials()
+        return mesh_ret
 
     def write_sif(self, sif_path):
         if self.elmer_free_text.Text != "":
@@ -122,9 +123,9 @@ class Writer(FemInputWriter.FemInputWriter):
                     _ELMERGRID_OFORMAT,
                     meshFile.name,
                     "-out", working_dir]
-            ret_code = subprocess.call(args)
-            Console.PrintLog("{} returned {}\n"
-                    .format(" ".join(args), ret_code))
+            p = subprocess.Popen(args, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+            return p.communicate()
             
 
     def _find_elmergrid_binary(self):

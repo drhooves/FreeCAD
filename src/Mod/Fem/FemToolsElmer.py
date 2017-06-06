@@ -105,8 +105,18 @@ def _createCaseDirFromSettings(name):
 
 
 def _solverFinished(status):
-    Console.PrintLog(status.meshLog)
-    Console.PrintLog(status.solverLog)
+    if status.meshOut is not None:
+        Console.PrintLog("=== STDOUT of ElmerGrid ==========\n")
+        Console.PrintLog(str(status.meshOut))
+    if status.meshErr is not None:
+        Console.PrintLog("=== STDERR of ElmerGrid ==========\n")
+        Console.PrintLog(str(status.meshErr))
+    if status.solverOut is not None:
+        Console.PrintLog("=== STDOUT of ElmerSolver ==========\n")
+        Console.PrintLog(str(status.solverOut))
+    if status.solverErr is not None:
+        Console.PrintLog("=== STDERR of ElmerSolver ==========\n")
+        Console.PrintLog(str(status.solverErr))
     if not status.success:
         Console.PrintMessage("Solver execution failed.\n")
         status.printErrorList(err_lookup)
@@ -116,8 +126,10 @@ class _Status(object):
 
     def __init__(self):
         self._success = True
-        self.meshLog = ""
-        self.solverLog = ""
+        self.meshOut = None
+        self.meshErr = None
+        self.solverOut = None
+        self.solverErr = None
         self.errorList = []
 
     @property
@@ -149,7 +161,10 @@ class FemToolsElmer(FemTools.FemTools):
         self.update_objects()
 
     def start_elmer(self, binary, working_dir):
-        return subprocess.Popen([binary], cwd=working_dir).wait()
+        p = subprocess.Popen([binary], cwd=working_dir,
+                stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        out, err = p.communicate()
+        return (p.returncode, out, err)
 
     def run(self):
         status = _Status()
@@ -161,13 +176,14 @@ class FemToolsElmer(FemTools.FemTools):
         progress_bar = App.Base.ProgressIndicator()
         if status.success:
             progress_bar.start("Executing Simulation...", 0)
-            if not working_dir:
-                working_dir = tempfile.mkdtemp()
-                delete_wd = True
-            try: self.write_input_files(working_dir)
+            try:
+                grid_ret = self.write_input_files(self.case_dir)
+                status.meshOut = grid_ret[0]
+                status.meshErr = grid_ret[1]
             except OSError as e:
                 status.error("create_inp_failed", e.strerror)
-            ret_code = self.start_elmer(binary, working_dir)
+            ret_code, status.solverOut, status.solverErr = self.start_elmer(
+                    binary, self.case_dir)
             if ret_code != 0:
                 status.error("exec_solver_failed", e.strerror)
 
@@ -188,7 +204,7 @@ class FemToolsElmer(FemTools.FemTools):
                 self.heatflux_constraints, self.initialtemperature_constraints,
                 self.beam_sections, self.shell_thicknesses, self.fluid_sections,
                 self.elmer_free_text)
-        writer.write_all(self.SIF_NAME, working_dir)
+        return writer.write_all(self.SIF_NAME, working_dir)
 
     def _check_analysis(self, status):
         if self.mesh is None:

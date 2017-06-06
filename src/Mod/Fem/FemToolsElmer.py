@@ -29,12 +29,10 @@ __url__ = "http://www.freecadweb.org"
 
 import os
 import os.path
-import sys
 import subprocess
 import shutil
 import tempfile
 from PySide import QtCore
-from PySide import QtGui
 
 import FreeCAD as App
 from FreeCAD import Console
@@ -43,13 +41,13 @@ import FemInputWriterElmer
 
 
 err_lookup = {
-    "cd_non_existent" : "Case directory {} doesn't exist.",
-    "cd_not_dir" : "Case directory {} is not a directory.",
-    "create_inp_failed" : "Failed to create input files: {}",
-    "exec_solver_failed" : "Solver execution failed with exit code: {}",
-    "mesh_missing" : "Mesh object missing.",
-    "no_freetext" : "Analysis without FreeText not jet supported!",
-    "freetext_empty" : "FreeText must not be empty.",
+    "cd_non_existent": "Case directory {} doesn't exist.",
+    "cd_not_dir": "Case directory {} is not a directory.",
+    "create_inp_failed": "Failed to create input files: {}",
+    "exec_solver_failed": "Solver execution failed with exit code: {}",
+    "mesh_missing": "Mesh object missing.",
+    "no_freetext": "Analysis without FreeText not jet supported!",
+    "freetext_empty": "FreeText must not be empty.",
 }
 
 
@@ -95,7 +93,8 @@ def _createCaseDirFromSettings(name):
                 .format(caseDir))
         return ""
     if not os.path.exists(caseDir):
-        try: os.mkdir(caseDir)
+        try:
+            os.mkdir(caseDir)
         except OSError as e:
             Console.PrintWarning(
                     "Couldn't create directory {}: {}\n"
@@ -151,8 +150,10 @@ class FemToolsElmer(FemTools.FemTools):
     SIF_NAME = "case.sif"
 
     def __init__(self, analysis, solver, case_dir):
-        if analysis is None: raise Exception("Analysis must not be None.")
-        if solver is None: raise Exception("Solver must not be None.")
+        if analysis is None:
+            raise Exception("Analysis must not be None.")
+        if solver is None:
+            raise Exception("Solver must not be None.")
         QtCore.QRunnable.__init__(self)
         QtCore.QObject.__init__(self)
         self.analysis = analysis
@@ -161,8 +162,9 @@ class FemToolsElmer(FemTools.FemTools):
         self.update_objects()
 
     def start_elmer(self, binary, working_dir):
-        p = subprocess.Popen([binary], cwd=working_dir,
-                stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen(
+                [binary], cwd=working_dir, stdout=subprocess.PIPE,
+                stdin=subprocess.PIPE)
         out, err = p.communicate()
         return (p.returncode, out, err)
 
@@ -172,7 +174,6 @@ class FemToolsElmer(FemTools.FemTools):
         self._check_case_dir(status)
         self._check_analysis(status)
 
-        delete_wd = False
         progress_bar = App.Base.ProgressIndicator()
         if status.success:
             progress_bar.start("Executing Simulation...", 0)
@@ -185,7 +186,7 @@ class FemToolsElmer(FemTools.FemTools):
             ret_code, status.solverOut, status.solverErr = self.start_elmer(
                     binary, self.case_dir)
             if ret_code != 0:
-                status.error("exec_solver_failed", e.strerror)
+                status.error("exec_solver_failed", ret_code)
 
         progress_bar.stop()
         self.finished.emit(status)
@@ -202,8 +203,8 @@ class FemToolsElmer(FemTools.FemTools):
                 self.selfweight_constraints, self.force_constraints,
                 self.pressure_constraints, self.temperature_constraints,
                 self.heatflux_constraints, self.initialtemperature_constraints,
-                self.beam_sections, self.shell_thicknesses, self.fluid_sections,
-                self.elmer_free_text)
+                self.beam_sections, self.shell_thicknesses,
+                self.fluid_sections, self.elmer_free_text)
         return writer.write_all(self.SIF_NAME, working_dir)
 
     def _check_analysis(self, status):

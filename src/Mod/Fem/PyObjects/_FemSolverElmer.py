@@ -20,7 +20,7 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__="Elmer Solver Object"
+__title__ = "Elmer Solver Object"
 __author__ = "Bernd Hahnebach, Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
@@ -41,11 +41,14 @@ class _FemSolverElmer(object):
         # Prop_Output   = 8
         attr = 1
 
-        obj.addProperty("App::PropertyString", "SolverType",
+        obj.addProperty(
+                "App::PropertyString", "SolverType",
                 "Base", "Type of the solver.", attr)
-        obj.addProperty("App::PropertyPath", "WorkingDir",
+        obj.addProperty(
+                "App::PropertyPath", "WorkingDir",
                 "Fem", "Working directory for calculations.")
-        obj.addProperty("App::PropertyEnumeration", "AnalysisType",
+        obj.addProperty(
+                "App::PropertyEnumeration", "AnalysisType",
                 "Fem", "Type of the analysis.")
 
         # Set default values for properties.

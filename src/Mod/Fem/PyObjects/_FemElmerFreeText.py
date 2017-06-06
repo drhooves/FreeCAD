@@ -38,7 +38,8 @@ class Proxy(object):
         # Prop_Hidden   = 4
         # Prop_Output   = 8
         attr = 4
-        obj.addProperty("App::PropertyString", "Text",
+        obj.addProperty(
+                "App::PropertyString", "Text",
                 "Base", "Text to be used for the SIF-File.", attr)
         obj.Text = DEFAULT_SIF_TEXT
 

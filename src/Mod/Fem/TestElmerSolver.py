@@ -20,7 +20,7 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__="Elmer Solver Object"
+__title__ = "Elmer Solver Object"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
@@ -33,13 +33,11 @@ import shutil
 import FreeCAD as App
 from PySide import QtCore
 import ObjectsFem
-import Fem
 import FemToolsElmer
 import FemGmshTools
 
 if App.GuiUp:
     import FreeCADGui as Gui
-    import FemGui
 
 
 def GuiSuite():

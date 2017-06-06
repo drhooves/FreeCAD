@@ -40,6 +40,7 @@ _STARTINFO_NAME = "ELMERSOLVER_STARTINFO"
 _ELMERGRID_IFORMAT = "8"
 _ELMERGRID_OFORMAT = "2"
 
+
 class Writer(FemInputWriter.FemInputWriter):
 
     # The first parameter defines the input file format:
@@ -71,25 +72,27 @@ class Writer(FemInputWriter.FemInputWriter):
     # The default output file name is the same with a different suffix.
 
     def __init__(
-            self, analysis_obj, solver_obj, mesh_obj, matlin_obj, matnonlin_obj,
-            fixed_obj, displacement_obj, contact_obj, planerotation_obj,
-            transform_obj, selfweight_obj, force_obj, pressure_obj,
-            temperature_obj, heatflux_obj, initialtemperature_obj,
-            beamsection_obj, shellthickness_obj, fluid_section_obj,
-            elmer_free_text_obj, analysis_type=None, dir_name=None):
+            self, analysis_obj, solver_obj, mesh_obj, matlin_obj,
+            matnonlin_obj, fixed_obj, displacement_obj, contact_obj,
+            planerotation_obj, transform_obj, selfweight_obj, force_obj,
+            pressure_obj, temperature_obj, heatflux_obj,
+            initialtemperature_obj, beamsection_obj, shellthickness_obj,
+            fluid_section_obj, elmer_free_text_obj, analysis_type=None,
+            dir_name=None):
 
         FemInputWriter.FemInputWriter.__init__(
-            self, analysis_obj, solver_obj, mesh_obj, matlin_obj, matnonlin_obj,
-            fixed_obj, displacement_obj, contact_obj, planerotation_obj,
-            transform_obj, selfweight_obj, force_obj, pressure_obj,
-            temperature_obj, heatflux_obj, initialtemperature_obj,
-            beamsection_obj, shellthickness_obj, fluid_section_obj,
-            analysis_type, dir_name)
+            self, analysis_obj, solver_obj, mesh_obj, matlin_obj,
+            matnonlin_obj, fixed_obj, displacement_obj, contact_obj,
+            planerotation_obj, transform_obj, selfweight_obj, force_obj,
+            pressure_obj, temperature_obj, heatflux_obj,
+            initialtemperature_obj, beamsection_obj, shellthickness_obj,
+            fluid_section_obj, analysis_type, dir_name)
         self.elmer_free_text = elmer_free_text_obj
 
     def write_all(self, sif_name, working_dir):
         sif_path = os.path.join(working_dir, sif_name)
-        Console.PrintLog("Write Elmer input files to {}...\n"
+        Console.PrintLog(
+                "Write Elmer input files to {}...\n"
                 .format(working_dir))
         self.write_sif(sif_path)
         self.write_startinfo(sif_name, working_dir)
@@ -103,14 +106,16 @@ class Writer(FemInputWriter.FemInputWriter):
             self._write_sif_from_string(sif_path, self.elmer_free_text.Text)
 
     def _write_sif_from_string(self, sif_path, text):
-        Console.PrintLog("Write SIF file to {}.\n"
+        Console.PrintLog(
+                "Write SIF file to {}.\n"
                 .format(sif_path))
         with open(sif_path, 'w') as f:
             f.write(text)
 
     def write_startinfo(self, sif_name, working_dir):
         startinfo_path = os.path.join(working_dir, _STARTINFO_NAME)
-        Console.PrintLog("Write ELMERFEM_STARTINFO to {}.\n"
+        Console.PrintLog(
+                "Write ELMERFEM_STARTINFO to {}.\n"
                 .format(startinfo_path))
         with open(startinfo_path, 'w') as f:
             f.write(sif_name)
@@ -123,10 +128,9 @@ class Writer(FemInputWriter.FemInputWriter):
                     _ELMERGRID_OFORMAT,
                     meshFile.name,
                     "-out", working_dir]
-            p = subprocess.Popen(args, stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
+            p = subprocess.Popen(
+                    args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return p.communicate()
-            
 
     def _find_elmergrid_binary(self):
         return "ElmerGrid"

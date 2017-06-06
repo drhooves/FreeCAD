@@ -35,7 +35,7 @@ class Proxy(object):
         vobj.Proxy = self
 
     def attach(self, vobj):
-        vobj.addDisplayMode(coin.SoGroup(), self.getDefaultDisplayMode());
+        vobj.addDisplayMode(coin.SoGroup(), self.getDefaultDisplayMode())
 
     def getDefaultDisplayMode(self):
         return "Default"

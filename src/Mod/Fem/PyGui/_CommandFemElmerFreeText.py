@@ -29,6 +29,7 @@ __url__ = "http://www.freecadweb.org"
 
 import FreeCAD as App
 import FreeCADGui as Gui
+import FemGui
 from FemCommands import FemCommands
 from PySide import QtCore
 
@@ -49,12 +50,13 @@ class _CommandElmerFreeText(FemCommands):
         self.is_active = 'with_analysis'
 
     def Activated(self):
+        analysis = FemGui.getActiveAnalysis()
         App.ActiveDocument.openTransaction("Create FreeText")
         Gui.addModule("ObjectsFem")
-        Gui.addModule("FemGui")
         Gui.doCommand(
-                "FemGui.getActiveAnalysis().Member += "
-                "[ObjectsFem.makeElmerFreeText()]")
+                "App.ActiveDocument.{}.Member += "
+                "[ObjectsFem.makeElmerFreeText()]"
+                .format(analysis.Name))
         App.ActiveDocument.commitTransaction()
         App.ActiveDocument.recompute()
 

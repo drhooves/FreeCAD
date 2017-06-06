@@ -51,15 +51,13 @@ class _CommandFemSolverElmer(FemCommands):
         self.is_active = 'with_analysis'
 
     def Activated(self):
-        doc = App.activeDocument()
         analysis = FemGui.getActiveAnalysis()
-
         App.ActiveDocument.openTransaction("Create SolverElmer")
         Gui.addModule("ObjectsFem")
         Gui.doCommand(
-                "App.getDocument('{}').getObject('{}').Member +="
+                "App.ActiveDocument.{}.Member +="
                 "[ObjectsFem.makeSolverElmer()]"
-                .format(doc.Name, analysis.Name))
+                .format(analysis.Name))
         App.ActiveDocument.commitTransaction()
         App.ActiveDocument.recompute()
 

@@ -65,14 +65,12 @@ class _CommandFemSolverRun(FemCommands):
             self.fea.finished.connect(load_results)
             QtCore.QThreadPool.globalInstance().start(self.fea)
         elif self.solver.SolverType == "FemSolverElmer":
-            doc = FreeCAD.activeDocument()
             analysis = FemGui.getActiveAnalysis()
             FreeCADGui.addModule("FemToolsElmer")
             FreeCADGui.doCommand(
                     "FemToolsElmer.runSolver("
-                    "App.getDocument('{0}').getObject('{1}'),"
-                    "App.getDocument('{0}').getObject('{2}'))"
-                    .format(doc.Name, analysis.Name, self.solver.Name))
+                    "App.ActiveDocument.{}, App.ActiveDocument.{})"
+                    .format(analysis.Name, self.solver.Name))
         elif self.solver.SolverType == "FemSolverZ88":
             import FemToolsZ88
             self.fea = FemToolsZ88.FemToolsZ88(None, self.solver)

@@ -178,6 +178,8 @@ Gui::MenuItem* Workbench::setupMenuBar() const
          << "FEM_ConstraintHeatflux"
          << "FEM_ConstraintInitialTemperature"
          << "Separator"
+         << "FEM_ElmerFreeText"
+         << "Separator"
          << "FEM_SolverControl"
          << "FEM_SolverRun"
          << "Separator"

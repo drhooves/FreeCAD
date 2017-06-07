@@ -65,6 +65,7 @@ INSTALL(
         PyObjects/_FemSolverElmer.py
         PyObjects/_FemSolverZ88.py
         PyObjects/_FemMaterial.py
+        PyObjects/_FemElmerFreeText.py
     DESTINATION
         Mod/Fem/PyObjects
 )
@@ -117,6 +118,7 @@ INSTALL(
         PyGui/_ViewProviderFemSolverCalculix.py
         PyGui/_ViewProviderFemSolverElmer.py
         PyGui/_ViewProviderFemSolverZ88.py
+        PyGui/_ViewProviderFemElmerFreeText.py
         PyGui/TaskPanelFemElementFluid1D.ui
         PyGui/TaskPanelFemElementGeometry1D.ui
         PyGui/TaskPanelFemElementGeometry2D.ui

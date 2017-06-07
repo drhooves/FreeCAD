@@ -305,6 +305,17 @@ def makeSolverElmer(name="Elmer"):
     return obj
 
 
+def makeElmerFreeText(name="SifFile"):
+    '''makeElmerFreeText(name): makes a ElmerFreeText object'''
+    obj = FreeCAD.ActiveDocument.addObject("App::FeaturePython", name)
+    import PyObjects._FemElmerFreeText
+    PyObjects._FemElmerFreeText.Proxy(obj)
+    if FreeCAD.GuiUp:
+        import PyGui._ViewProviderFemElmerFreeText
+        PyGui._ViewProviderFemElmerFreeText.Proxy(obj.ViewObject)
+    return obj
+
+
 def makeSolverZ88(name="Z88"):
     '''makeSolverZ88(name): makes a Z88 solver object'''
     obj = FreeCAD.ActiveDocument.addObject("Fem::FemSolverObjectPython", name)

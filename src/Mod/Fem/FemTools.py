@@ -253,7 +253,7 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                     self.mesh = m
                 else:
                     raise Exception('FEM: Multiple mesh in analysis not yet supported!')
-            elif hasattr(m, "Proxy") and m.Proxy.Type == "FemElmerFreeText":
+            elif m.isDerivedFrom("App::TextDocument"):
                 if self.elmer_free_text is None:
                     self.elmer_free_text = m
                 else:

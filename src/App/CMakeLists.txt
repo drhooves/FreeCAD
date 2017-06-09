@@ -132,6 +132,7 @@ SET(Document_CPP_SRCS
     FeaturePython.cpp
     FeatureTest.cpp
     GeoFeature.cpp
+    TextDocument.cpp
     GeoFeatureGroupExtensionPyImp.cpp
     GeoFeatureGroupExtension.cpp
     OriginGroupExtensionPyImp.cpp
@@ -172,6 +173,7 @@ SET(Document_HPP_SRCS
     FeaturePythonPyImp.inl
     FeatureTest.h
     GeoFeature.h
+    TextDocument.h
     GeoFeatureGroupExtension.h
     OriginGroupExtension.h
     Part.h

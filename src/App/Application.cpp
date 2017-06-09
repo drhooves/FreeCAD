@@ -81,6 +81,7 @@
 #include <Base/UnitPy.h>
 
 #include "GeoFeature.h"
+#include "TextDocument.h"
 #include "FeatureTest.h"
 #include "FeaturePython.h"
 #include "ComplexGeoData.h"
@@ -1265,6 +1266,7 @@ void Application::initTypes(void)
     App ::TransactionalObject       ::init();
     App ::DocumentObject            ::init();
     App ::GeoFeature                ::init();
+    App ::TextDocument              ::init();
     App ::FeatureTest               ::init();
     App ::FeatureTestException      ::init();
     App ::FeaturePython             ::init();

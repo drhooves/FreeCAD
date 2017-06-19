@@ -29,11 +29,14 @@ __url__ = "http://www.freecadweb.org"
 
 from FreeCAD import Console
 import os.path
+import io
 import tempfile
 import subprocess
 
 import Fem
+import ObjectsFem
 import FemInputWriter
+import sifio
 
 
 _STARTINFO_NAME = "ELMERSOLVER_STARTINFO"
@@ -97,20 +100,81 @@ class Writer(FemInputWriter.FemInputWriter):
         self.write_sif(sif_path)
         self.write_startinfo(sif_name, working_dir)
         mesh_ret = self.write_mesh(working_dir)
-        # self.write_contraints()
-        # self.write_materials()
         return mesh_ret
 
     def write_sif(self, sif_path):
-        if self.elmer_free_text.Text != "":
-            self._write_sif_from_string(sif_path, self.elmer_free_text.Text)
+        header = self.get_header()
+        simulation = self.get_simulation()
+        constants = self.get_constants()
+        body_forces = self.get_body_forces()
+        initial_conditions = self.get_body_forces()
+        material = self.get_material()
+        solver = self.get_solver()
+        equation = self.get_equation(solver)
+        body = self.get_body(
+                material, body_forces, equation, initial_conditions)
 
-    def _write_sif_from_string(self, sif_path, text):
-        Console.PrintLog(
-                "Write SIF file to {}.\n"
-                .format(sif_path))
-        with open(sif_path, 'w') as f:
-            f.write(text)
+        sections = []
+        sections.append(header)
+        sections.append(simulation)
+        sections.append(constants)
+        sections.extend(body_forces)
+        sections.extend(initial_conditions)
+        sections.append(material)
+        sections.append(solver)
+        sections.append(equation)
+        sections.append(body)
+
+        with io.FileIO(sif_path, 'w') as fstream:
+            sifio.write(sections, fstream)
+
+    def get_header(self):
+        section = sifio.Section(sifio.HEADER)
+        section["Mesh DB"] = "."
+        section["Include Path"] = ""
+        section["Results Directory"] = ""
+        return section
+
+    def get_simulation(self):
+        section = sifio.Section(sifio.SIMULATION)
+        section["Coordinate System"] = "Cartesian"
+        section["Coordinate Mapping"] = (1, 2, 3)
+        section["Simulation Type"] = "Steady state"
+        section["Steady State Max Iterations"] = 1
+        section["Output Intervals"] = 1
+        section["Timestepping Method"] = "BDF"
+        section["BDF Order"] = 1
+        section["Post File"] = "case.vtu"
+        section["Coordinate scaling"] = 0.001
+        section["Use Mesh Names"] = True
+        return section
+
+    def get_constants(self):
+        section = sifio.Section(sifio.CONSTANTS)
+        section["Gravity"] = (0, -1, 0, 9.82)
+        section["Stefan Boltzmann"] = 5.67e-12
+        section["Permittivity of Vacuum"] = 8.8542e-12
+        section["Boltzmann Constant"] = 1.3807e-23
+        section["Unit Charge"] = 1.602e-19
+        return section
+
+    def get_body_forces(self):
+        pass
+
+    def get_initial_conditions(self):
+        pass
+
+    def get_material(self):
+        pass
+
+    def get_solver(self):
+        pass
+
+    def get_equation(self):
+        pass
+
+    def get_body(self):
+        pass
 
     def write_startinfo(self, sif_name, working_dir):
         startinfo_path = os.path.join(working_dir, _STARTINFO_NAME)
@@ -134,9 +198,3 @@ class Writer(FemInputWriter.FemInputWriter):
 
     def _find_elmergrid_binary(self):
         return "ElmerGrid"
-
-    def write_contraints(self):
-        pass
-
-    def write_materials(self):
-        pass

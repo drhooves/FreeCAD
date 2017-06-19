@@ -97,6 +97,7 @@ SET(FemScripts_SRCS
     FemToolsElmer.py
     FemToolsZ88.py
     ObjectsFem.py
+    siflib.py
     TestFem.py
     TestElmerSolver.py
 )

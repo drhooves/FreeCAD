@@ -31,8 +31,8 @@ void TextDocumentEditorView::editObject(App::TextDocument* obj)
 		connect(getEditor()->document(), SIGNAL(modificationChanged(bool)),
 				this, SLOT(setWindowModified(bool)));
 
-		setWindowTitle(QString::fromAscii(obj->Label.getValue())
-				+ QString::fromAscii("[*]"));
+		setWindowTitle(QString::fromLatin1(obj->Label.getValue())
+				+ QString::fromLatin1("[*]"));
 		setDocument(Application::Instance->getDocument(obj->getDocument()));
 		getEditor()->setPlainText(QString::fromUtf8(obj->Text.getValue()));
 		this->textDocument = obj;

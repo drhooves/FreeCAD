@@ -24,7 +24,6 @@
 import collections
 
 
-HEADER              = "Header"
 SIMULATION          = "Simulation"
 CONSTANTS           = "Constants"
 BODY                = "Body"
@@ -38,7 +37,6 @@ COMPONENT           = "Component"
 
 
 _VALID_SECTIONS = (
-        HEADER,
         SIMULATION,
         CONSTANTS,
         BODY,
@@ -63,9 +61,12 @@ _NUMBERED_SECTIONS = (
         COMPONENT,
 )
 
+
 _SECTION_DELIM  = "End"
 _WHITESPACE     = " "
+_INDENT         = " "*2
 _NEWLINE        = "\n"
+
 
 _TYPE_REAL      = "Real"
 _TYPE_INTEGER   = "Integer"
@@ -74,21 +75,83 @@ _TYPE_STRING    = "String"
 _TYPE_FILE      = "File"
 
 
-def write(sections, stream):
-    ids = _IDManager()
+WARN = "Warn"
+IGNORE = "Ignore"
+ABORT = "Abort"
+SILENT = "Silent"
+
+
+def createSection(name):
+    section = Section(name)
+    if not isValid(section):
+        raise ValueError("Invalid section name: %s" % name)
+    return section
+
+
+def writeSections(sections, stream):
+    ids = _IdManager()
     _Writer(ids, sections, stream).write()
 
 
 def isNumbered(section):
-    return section in _NUMBERED_SECTIONS
+    return section.name in _NUMBERED_SECTIONS
 
+
+def isValid(section):
+    return section.name in _VALID_SECTIONS
+
+
+class Sif(object):
+
+    _CHECK_KEYWORDS = "Check Keywords"
+    _HEADER = "Header"
+    _MESHDB_ATTR = "Mesh DB"
+    _INCLUDE_ATTR = "Include Path"
+    _RESULT_ATTR = "Results Directory"
+
+    def __init__(self, sections=[], meshLocation="."):
+        self.sections = sections
+        self.meshPath = meshLocation
+        self.checkKeywords = WARN
+        self.incPath = ""
+        self.resPath = ""
+
+    def write(self, stream):
+        self._writeCheckKeywords(stream)
+        stream.write(_NEWLINE*2)
+        self._writeHeader(stream)
+        stream.write(_NEWLINE*2)
+        writeSections(self.sections, stream)
+
+    def _writeCheckKeywords(self, stream):
+        stream.write(self._CHECK_KEYWORDS)
+        stream.write(_WHITESPACE)
+        stream.write(self.checkKeywords)
+
+    def _writeHeader(self, stream):
+        stream.write(self._HEADER)
+        stream.write(_NEWLINE)
+        self._writeAttr(self._MESHDB_ATTR, self.meshPath, stream)
+        stream.write(_NEWLINE)
+        if self.incPath:
+            self._writeAttr(self._INCLUDE_ATTR, self.incPath, stream)
+            stream.write(_NEWLINE)
+        if self.resPath:
+            self._writeAttr(self._RESULT_ATTR, self.resPath, stream)
+            stream.write(_NEWLINE)
+        stream.write(_SECTION_DELIM)
+
+    def _writeAttr(self, name, value, stream):
+        stream.write(_INDENT)
+        stream.write(name)
+        stream.write(_WHITESPACE)
+        stream.write('"%s"' % value)
+        
 
 class Section(object):
 
     def __init__(self, name):
         self.name = name
-        if name not in _VALID_SECTIONS:
-            raise ValueError("Invalid section name: %s" % name)
         self._attrs = dict()
 
     def __setitem__(self, key, value):
@@ -101,59 +164,73 @@ class Section(object):
         del self._attrs[key]
 
     def __iter__(self):
-        return iter(self._attrs)
+        return self._attrs.iteritems()
 
 
-class PathAttr(str):
+class FileAttr(str):
     pass
 
 
 class _Writer(object):
 
     def __init__(self, idManager, sections, stream):
-        self._ids = idManager
+        self._idMgr = idManager
         self._sections = sections
         self._stream = stream
 
     def write(self):
-        for s in self.sections:
+        for s in self._sections:
             self._writeSection(s)
-            self.stream.write(_NEWLINE)
+            self._stream.write(_NEWLINE)
 
-    def _writeSection(self):
+    def _writeSection(self, s):
         self._writeSectionHeader(s)
-        self.stream.write(_NEWLINE)
         self._writeSectionBody(s)
-        self.stream.write(_NEWLINE)
         self._writeSectionFooter(s)
+        self._stream.write(_NEWLINE)
 
     def _writeSectionHeader(self, s):
-        self.stream.write(s.name)
-        self.stream.write(_WHITESPACE)
-        if section.isNumbered(s):
-            self.stream.write(self._ids.getId(s))
+        self._stream.write(s.name)
+        self._stream.write(_WHITESPACE)
+        if isNumbered(s):
+            self._stream.write(str(self._idMgr.getId(s)))
 
     def _writeSectionFooter(self, s):
-        self.stream.write(_SECTION_DELIM)
+        self._stream.write(_NEWLINE)
+        self._stream.write(_SECTION_DELIM)
 
     def _writeSectionBody(self, s):
         for key, data in s:
-            self._writeAttribute(key, data))
-            self.stream.write(_NEWLINE)
+            self._writeAttribute(key, data)
 
-    def _writeAttribute(key, data):
-        if isinstance(data, section.Section):
-            self._writeSectionAttr(key, data)
+    def _writeAttribute(self, key, data):
+        if isinstance(data, Section):
+            self._stream.write(_NEWLINE)
+            self._writeScalarAttr(key, data)
+        elif isinstance(data, FileAttr):
+            self._stream.write(_NEWLINE)
+            self._writeFileAttr(key, data)
         elif self._isCollection(data):
-            self._writeArrAttr(key, data)
+            if len(data) == 1:
+                scalarData = self._getOnlyElement(data)
+                self._stream.write(_NEWLINE)
+                self._writeScalarAttr(key, scalarData)
+            elif len(data) > 1:
+                self._stream.write(_NEWLINE)
+                self._writeArrAttr(key, data)
         else:
+            self._stream.write(_NEWLINE)
             self._writeScalarAttr(key, data)
 
-    def _isCollection(data):
+    def _getOnlyElement(self, collection):
+        it = iter(collection)
+        return it.next()
+
+    def _isCollection(self, data):
         return (not isinstance(data, basestring)
                 and isinstance(data, collections.Iterable))
 
-    def _checkScalar(dataType):
+    def _checkScalar(self, dataType):
         if issubclass(dataType, int):
             return self._genIntAttr
         if issubclass(dataType, float):
@@ -168,54 +245,64 @@ class _Writer(object):
         attrType = self._getAttrTypeScalar(data)
         if attrType is None:
             raise ValueError("Unsupported data type: %s" % type(data))
-        self.stream.write(key)
-        self.stream.write(_WHITESPACE)
-        self.stream.write("=")
-        self.stream.write(_WHITESPACE)
-        self.stream.write(attrType)
-        self.stream.write(_WHITESPACE)
-        self.stream.write(self._preprocess(data, type(data)))
+        self._stream.write(_INDENT)
+        self._stream.write(key)
+        self._stream.write(_WHITESPACE)
+        self._stream.write("=")
+        self._stream.write(_WHITESPACE)
+        self._stream.write(attrType)
+        self._stream.write(_WHITESPACE)
+        self._stream.write(self._preprocess(data, type(data)))
 
     def _writeArrAttr(self, key, data):
         attrType = self._getAttrTypeArr(data)
-        self.stream.write(key)
-        self.stream.write("(" + len(data) + ")")
-        self.stream.write(_WHITESPACE)
-        self.stream.write("=")
-        self.stream.write(_WHITESPACE)
-        self.stream.write(attrType)
+        self._stream.write(_INDENT)
+        self._stream.write(key)
+        self._stream.write("(%d)" % len(data))
+        self._stream.write(_WHITESPACE)
+        self._stream.write("=")
+        self._stream.write(_WHITESPACE)
+        self._stream.write(attrType)
         for val in data:
-            self.stream.write(_WHITESPACE)
-            self.stream.write(self._preprocess(val, type(data)))
+            self._stream.write(_WHITESPACE)
+            self._stream.write(self._preprocess(val, type(val)))
 
-    def _getSifDataType(dataType):
-        if issubclass(dataType, section.Section):
+    def _writeFileAttr(self, key, data):
+        self._stream.write(_INDENT)
+        self._stream.write(key)
+        self._stream.write(_WHITESPACE)
+        self._stream.write("=")
+        self._stream.write(_WHITESPACE)
+        self._stream.write(_TYPE_FILE)
+        for val in data.split("/"):
+            if val:
+                self._stream.write(_WHITESPACE)
+                self._stream.write('"%s"' % val)
+
+    def _getSifDataType(self, dataType):
+        if issubclass(dataType, Section):
             return _TYPE_INTEGER
+        if issubclass(dataType, bool):
+            return _TYPE_LOGICAL
         if issubclass(dataType, int):
             return _TYPE_INTEGER
         if issubclass(dataType, float):
             return _TYPE_REAL
-        if issubclass(dataType, bool):
-            return _TYPE_LOGICAL
-        if issubclass(dataType, section.Path):
-            return _TYPE_FILE
         if issubclass(dataType, basestring):
             return _TYPE_STRING
-        raise ValueError("Unsupported data type: %s" % type(data))
+        raise ValueError("Unsupported data type: %s" % dataType)
 
-    def _preprocess(data, dataType):
-        if issubclass(dataType, section.Section):
-            return str(self.ids.getId(data))
-        if issubclass(dataType, section.Path):
-            return '"{}"'.format(data)
+    def _preprocess(self, data, dataType):
+        if issubclass(dataType, Section):
+            return str(self._idMgr.getId(data))
         if issubclass(dataType, basestring):
-            return '"{}"'.format(data)
+            return '"%s"' % data
         return str(data)
 
-    def _getAttrTypeScalar(data):
+    def _getAttrTypeScalar(self, data):
         return self._getSifDataType(type(data))
 
-    def _getAttrTypeArr(data):
+    def _getAttrTypeArr(self, data):
         if not data:
             raise ValueError("Collections must not be empty.")
         it = iter(data)
@@ -228,18 +315,18 @@ class _Writer(object):
 
 class _IdManager(object):
 
-    def __init__(self, sections, stream, firstId=1):
+    def __init__(self, firstId=1):
         self._pool = dict()
         self._ids = dict()
         self.firstId = firstId
 
-    def _setId(self, section):
+    def setId(self, section):
         if section.name not in self._pool:
             self._pool[section.name] = self.firstId
         self._ids[section] = self._pool[section.name]
         self._pool[section.name] += 1
 
-    def _getId(self, section):
+    def getId(self, section):
         if section not in self._ids:
             self.setId(section)
         return self._ids[section]

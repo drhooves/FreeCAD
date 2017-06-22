@@ -45,7 +45,9 @@ INSTALL(
         FemToolsElmer.py
         FemToolsZ88.py
         ObjectsFem.py
-	siflib.py
+	FemDefsElmer.py
+	sifio.py
+	Report.py
         TestFem.py
         TestElmerSolver.py
     DESTINATION

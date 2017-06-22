@@ -41,12 +41,16 @@ if App.GuiUp:
 
 
 def GuiSuite():
-    classes = [TestCantileverGui]
+    classes = []
+    classes.append(TestCantileverGui)
     return _loadFromClasses(classes)
 
 
 def AppSuite():
-    classes = [TestSolverObject, TestCantileverApp]
+    classes = []
+    classes.append(TestSolverObject)
+    classes.append(TestCantileverPhase2App)
+    #classes.append(TestCantileverApp)
     return _loadFromClasses(classes)
 
 
@@ -138,6 +142,70 @@ class TestCantileverApp(unittest.TestCase):
         self.assertTrue(os.path.isfile(result2))
         self.assertGreater(os.path.getsize(result1), 10e3)
         self.assertGreater(os.path.getsize(result2), 10e3)
+
+
+class TestCantileverPhase2App(unittest.TestCase):
+
+    def setUp(self):
+        self.doc = App.newDocument()
+        self.geo = self._makeGeo()
+        self.mesh = self._makeMesh(self.geo)
+        self.solver = ObjectsFem.makeSolverElmer()
+        self.fixed = ObjectsFem.makeConstraintFixed()
+        self.fixed.References += [(self.geo, ('Face1'))]
+        self.force = ObjectsFem.makeConstraintForce()
+        self.force.References += [(self.geo, ('Face2'))]
+        self.material = self._makeMaterial()
+        self.analysis = ObjectsFem.makeAnalysis()
+        self.analysis.Member += [
+                self.mesh,
+                self.solver,
+                self.fixed,
+                self.force,
+                self.material,
+        ]
+
+    def _makeMaterial(self):
+        mat = dict()
+        mat["Density"] = "7900 kg/m^3"
+        mat["PoissonRatio"] = "0.3"
+        mat["YoungsModulus"] = "210 GPa"
+        obj = ObjectsFem.makeMaterialSolid()
+        obj.Material = mat
+        return obj
+
+    def _makeGeo(self):
+        geo = App.ActiveDocument.addObject("Part::Box")
+        geo.Length = 8000
+        geo.Width = 1000
+        geo.Height = 1000
+        return geo
+
+    def _makeMesh(self, geo):
+        mesh = ObjectsFem.makeMeshGmsh()
+        mesh.Part = geo
+        tools = FemGmshTools.FemGmshTools(mesh)
+        tools.create_mesh()
+        return mesh
+
+    def tearDown(self):
+        App.closeDocument(self.doc.Name)
+
+    def testSpecificDir(self):
+        try:
+            caseDir = tempfile.mkdtemp()
+            FemToolsElmer.runSolver(self.analysis, self.solver, caseDir)
+            QtCore.QThreadPool.globalInstance().waitForDone()
+            self._checkResult(caseDir)
+        finally:
+            pass
+            #shutil.rmtree(caseDir)
+
+    def _checkResult(self, caseDir):
+        self.assertTrue(os.path.isdir(caseDir))
+        result = os.path.join(caseDir, "case0001.vtu")
+        self.assertTrue(os.path.isfile(result))
+        self.assertGreater(os.path.getsize(result), 10e3)
 
 
 class TestCantileverGui(unittest.TestCase):

@@ -99,6 +99,7 @@ SET(FemScripts_SRCS
     ObjectsFem.py
     FemDefsElmer.py
     sifio.py
+    Report.py
     TestFem.py
     TestElmerSolver.py
 )

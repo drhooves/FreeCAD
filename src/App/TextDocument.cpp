@@ -36,4 +36,7 @@ TextDocument::TextDocument()
     ADD_PROPERTY_TYPE(
 			FileType, (""), 0, App::Prop_None,
 			"Type of the stored content.");
+    ADD_PROPERTY_TYPE(
+			ReadOnly, (false), 0, App::Prop_None,
+			"Defines whether the content can be edited.");
 }

@@ -36,6 +36,7 @@ namespace App
 	public:
 		PropertyString Text;
 		PropertyString FileType;
+		PropertyBool ReadOnly;
 
 		TextDocument();
 		~TextDocument() {};

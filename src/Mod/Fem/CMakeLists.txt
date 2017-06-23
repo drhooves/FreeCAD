@@ -48,6 +48,7 @@ INSTALL(
         ObjectsFem.py
 	FemDefsElmer.py
 	sifio.py
+	Report.py
         TestFem.py
     DESTINATION
         Mod/Fem

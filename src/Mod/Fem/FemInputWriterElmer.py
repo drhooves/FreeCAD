@@ -205,8 +205,10 @@ class Writer(object):
         sections = []
         obj = self._getFirstOfType(
                 "Fem::FeaturePython", "FemConstraintSelfWeight")
+        matObj = self._getFirstOfType("App::MaterialObjectPython")
+        density = self._getInUnit(matObj.Material["Density"], "kg/m^3")
         if obj is not None:
-            sections.append(self._getSelfweight(obj))
+            sections.append(self._getSelfweight(obj, density))
         return sections
 
     def _getBoundaryConditions(self):
@@ -324,12 +326,12 @@ class Writer(object):
         s["Initial Condition"] = initialConditions
         return s
 
-    def _getSelfweight(self, obj):
+    def _getSelfweight(self, obj, density):
         s = sifio.createSection(sifio.BODY_FORCE)
         gravity = CONSTS_DEF["Gravity"]
-        s["Stress Bodyforce 1"] = float(gravity * obj.Gravity_x)
-        s["Stress Bodyforce 2"] = float(gravity * obj.Gravity_y)
-        s["Stress Bodyforce 3"] = float(gravity * obj.Gravity_z)
+        s["Stress Bodyforce 1"] = float(gravity * obj.Gravity_x * density)
+        s["Stress Bodyforce 2"] = float(gravity * obj.Gravity_y * density)
+        s["Stress Bodyforce 3"] = float(gravity * obj.Gravity_z * density)
         return s
 
     def _getFixed(self, obj):

@@ -96,9 +96,9 @@ class Writer(object):
         self.meshGroups = set()
 
     def writeInputFiles(self, report):
+        self._purgeMeshGroups()
         self._writeSif()
         self._writeStartinfo()
-        self._makeMeshGroups()
         self._recreateMesh()
         self._writeMesh()
 
@@ -141,14 +141,17 @@ class Writer(object):
                 "-out", self.directory]
         p = subprocess.call(args)
 
-    def _makeMeshGroups(self):
+    def _purgeMeshGroups(self):
         mesh = self._getFirstOfType("Fem::FemMeshObject")
         for grp in mesh.MeshGroupList:
             grp.Document.removeObject(grp.Name)
         mesh.MeshGroupList = []
-        for name in self.meshGroups:
-            obj = ObjectsFem.makeMeshGroup(mesh, name=name)
-            obj.References += [(mesh.Part, (name,))]
+
+    def _getGroupName(self, subName):
+        mesh = self._getFirstOfType("Fem::FemMeshObject")
+        obj = ObjectsFem.makeMeshGroup(mesh, name=subName)
+        obj.References += [(mesh.Part, (subName,))]
+        return obj.Name
 
     def _writeSif(self):
         simulation = self._getSimulation()
@@ -214,14 +217,14 @@ class Writer(object):
     def _getBoundaryConditions(self):
         sections = []
         for obj in self._getOfType("Fem::ConstraintFixed"):
-            sections.append(self._getFixed(obj))
+            sections.extend(self._getFixeds(obj))
         for obj in self._getOfType("Fem::ConstraintForce"):
-            sections.append(self._getForce(obj))
+            sections.extend(self._getForces(obj))
         for obj in self._getOfType("Fem::ConstraintDisplacement"):
-            sections.append(self._getDisplacement(obj))
+            sections.extend(self._getDisplacements(obj))
         if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
             for obj in self._getOfType("Fem::ConstraintTemperature"):
-                sections.append(self._getTemp(obj))
+                sections.extend(self._getTemps(obj))
         return sections
 
     def _getInitialConditions(self):
@@ -317,9 +320,8 @@ class Writer(object):
         return s
 
     def _getBody(self, material, bodyForces, equation, initialConditions):
-        self.meshGroups.add(_SOLID_NAME)
         s = sifio.createSection(sifio.BODY)
-        s["Name"] = _SOLID_NAME
+        s["Name"] = self._getGroupName(_SOLID_NAME)
         s["Material"] = material
         s["Equation"] = equation
         s["Body Force"] = bodyForces
@@ -334,52 +336,60 @@ class Writer(object):
         s["Stress Bodyforce 3"] = float(gravity * obj.Gravity_z * density)
         return s
 
-    def _getFixed(self, obj):
-        faceNames = set(obj.References[0][1])
-        self.meshGroups |= faceNames
-        s = sifio.createSection(sifio.BOUNDARY_CONDITION)
-        s["Name"] = faceNames
-        s["Displacement 1"] = 0.0
-        s["Displacement 2"] = 0.0
-        s["Displacement 3"] = 0.0
-        return s
-
-    def _getDisplacement(self, obj):
-        faceNames = set(obj.References[0][1])
-        self.meshGroups |= faceNames
-        s = sifio.createSection(sifio.BOUNDARY_CONDITION)
-        s["Name"] = faceNames
-        if not obj.xFree:
-            s["Displacement 1"] = float(obj.xDisplacement) * 0.001
-        elif obj.xFix:
+    def _getFixeds(self, obj):
+        names = (self._getGroupName(x) for x in obj.References[0][1])
+        sections = []
+        for n in names:
+            s = sifio.createSection(sifio.BOUNDARY_CONDITION)
+            s["Name"] = n
             s["Displacement 1"] = 0.0
-        if not obj.yFree:
-            s["Displacement 2"] = float(obj.yDisplacement) * 0.001
-        elif obj.yFix:
             s["Displacement 2"] = 0.0
-        if not obj.zFree:
-            s["Displacement 3"] = float(obj.zDisplacement) * 0.001
-        elif obj.zFix:
             s["Displacement 3"] = 0.0
-        return s
+            sections.append(s)
+        return sections
 
-    def _getForce(self, obj):
-        faceNames = set(obj.References[0][1])
-        self.meshGroups |= faceNames
-        s = sifio.createSection(sifio.BOUNDARY_CONDITION)
-        s["Name"] = faceNames
-        s["Force 1"] = float(obj.DirectionVector.x * obj.Force)
-        s["Force 2"] = float(obj.DirectionVector.y * obj.Force)
-        s["Force 3"] = float(obj.DirectionVector.z * obj.Force)
-        return s
+    def _getDisplacements(self, obj):
+        names = [self._getGroupName(x) for x in obj.References[0][1]]
+        sections = []
+        for n in names:
+            s = sifio.createSection(sifio.BOUNDARY_CONDITION)
+            s["Name"] = n
+            if not obj.xFree:
+                s["Displacement 1"] = float(obj.xDisplacement) * 0.001
+            elif obj.xFix:
+                s["Displacement 1"] = 0.0
+            if not obj.yFree:
+                s["Displacement 2"] = float(obj.yDisplacement) * 0.001
+            elif obj.yFix:
+                s["Displacement 2"] = 0.0
+            if not obj.zFree:
+                s["Displacement 3"] = float(obj.zDisplacement) * 0.001
+            elif obj.zFix:
+                s["Displacement 3"] = 0.0
+            sections.append(s)
+        return sections
 
-    def _getTemp(self, obj):
-        faceNames = set(obj.References[0][1])
-        self.meshGroups |= faceNames
-        s = sifio.createSection(sifio.BOUNDARY_CONDITION)
-        s["Name"] = faceNames
-        s["Temperature"] = float(obj.Temperature)
-        return s
+    def _getForces(self, obj):
+        names = [self._getGroupName(x) for x in obj.References[0][1]]
+        sections = []
+        for n in names:
+            s = sifio.createSection(sifio.BOUNDARY_CONDITION)
+            s["Name"] = n
+            s["Force 1"] = float(obj.DirectionVector.x * obj.Force)
+            s["Force 2"] = float(obj.DirectionVector.y * obj.Force)
+            s["Force 3"] = float(obj.DirectionVector.z * obj.Force)
+            sections.append(s)
+        return sections
+
+    def _getTemps(self, obj):
+        names = [self._getGroupName(x) for x in obj.References[0][1]]
+        sections = []
+        for n in names:
+            s = sifio.createSection(sifio.BOUNDARY_CONDITION)
+            s["Name"] = names
+            s["Temperature"] = float(obj.Temperature)
+            sections.append(s)
+        return sections
 
     def _getInitialTemp(self, obj):
         s = sifio.createSection(sifio.INITIAL_CONDITION)

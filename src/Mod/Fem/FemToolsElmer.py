@@ -190,7 +190,7 @@ def _getOutputObj(analysis):
     objs = _getOfType(analysis, "App::TextDocument")
     outputObj = None
     for o in objs:
-        if o.Name == _OUTPUT_OBJ_NAME:
+        if o.Name.startswith(_OUTPUT_OBJ_NAME):
             outputObj = o
             break
     if outputObj is None:

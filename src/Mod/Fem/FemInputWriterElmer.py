@@ -51,7 +51,7 @@ _SOLID_NAME = "Solid1"
 
 CONSTS_DEF = {
     "Gravity": 9.82,
-    "StefanBoltzmann": 5.67e-12,
+    "StefanBoltzmann": 5.67e-8,
     "PermittivityOfVacuum": 8.8542e-12,
     "BoltzmannConstant": 1.3807e-23,
     "UnitCharge": 1.602e-19,

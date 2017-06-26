@@ -378,6 +378,9 @@ class Writer(object):
             s["Force 1"] = float(obj.DirectionVector.x * obj.Force)
             s["Force 2"] = float(obj.DirectionVector.y * obj.Force)
             s["Force 3"] = float(obj.DirectionVector.z * obj.Force)
+            s["Force 1 Normalize by Area"] = True
+            s["Force 2 Normalize by Area"] = True
+            s["Force 3 Normalize by Area"] = True
             sections.append(s)
         return sections
 

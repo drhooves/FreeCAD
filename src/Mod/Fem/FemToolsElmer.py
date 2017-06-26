@@ -62,20 +62,23 @@ _SOLVER_INFO_TITLE = "Info to ElmerSolver"
 _SOLVER_INFO_TEXT = None
 
 _SUPPORTED_CONSTRAINTS = [
-        "Fem::ConstraintFixed",
-        "Fem::ConstraintForce",
-        "Fem::ConstraintDisplacement",
-        "Fem::ConstraintTemperature",
-        "Fem::ConstraintSelfWeight",
-        "Fem::ConstraintInitialTemperature",
+        ("Fem::ConstraintFixed",),
+        ("Fem::ConstraintForce",),
+        ("Fem::ConstraintDisplacement",),
+        ("Fem::ConstraintTemperature",),
+        ("Fem::ConstraintSelfWeight",),
+        ("Fem::ConstraintInitialTemperature",),
+        ("Fem::FeaturePython", "FemConstraintSelfWeight",),
 ]
 
-_SPECIAL_MEBMERS = [
-        "App::MaterialObjectPython",
-        "Fem::FemMeshObject",
-        "Fem::FemSolverObjectPython",
-        "Fem::FemMeshObjectPython",
-        "App::TextDocument",
+_SPECIAL_MEMBERS = [
+        ("App::MaterialObjectPython",),
+        ("Fem::FemMeshObject",),
+        ("Fem::FemSolverObjectPython",),
+        ("Fem::FemMeshObjectPython",),
+        ("App::TextDocument",),
+        ("Fem::FemResultObjectPython",),
+        ("Fem::FemResultObject",),
 ]
 
 
@@ -171,10 +174,24 @@ def _checkMaterial(analysis, solver, report):
 
 def _checkUnsupported(analysis, solver, report):
     for m in analysis.Member:
-        print "Check %s of type %s\n" % (m.Label, m.TypeId)
-        if (m.TypeId not in _SUPPORTED_CONSTRAINTS
-                and m.TypeId not in _SPECIAL_MEBMERS):
+        supported = False
+        for sm in _SPECIAL_MEMBERS:
+            if _isOfType(m, *sm):
+                supported = True
+        for sc in _SUPPORTED_CONSTRAINTS:
+            if _isOfType(m, *sc):
+                supported = True
+        if not supported:
             report.appendInfo("unsupported_constraint", m.Label, m.TypeId)
+
+
+def _isOfType(obj, baseType, pyType=None):
+    if obj.TypeId == baseType:
+        if pyType is None:
+            return True
+        if hasattr(obj, "Proxy") and obj.Proxy.Type == pyType:
+            return True
+    return False
     
     
 def _getOfType(analysis, baseType, pyType=None):

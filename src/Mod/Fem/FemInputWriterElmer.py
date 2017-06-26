@@ -93,7 +93,7 @@ class Writer(object):
         self.solver = solver
         self.directory = directory
         self.gridBin = gridBin
-        self.meshGroups = set()
+        self._groupNames = dict()
 
     def writeInputFiles(self, report):
         self._purgeMeshGroups()
@@ -148,9 +148,12 @@ class Writer(object):
         mesh.MeshGroupList = []
 
     def _getGroupName(self, subName):
+        if subName in self._groupNames:
+            return self._groupNames[subName]
         mesh = self._getFirstOfType("Fem::FemMeshObject")
         obj = ObjectsFem.makeMeshGroup(mesh, name=subName)
         obj.References += [(mesh.Part, (subName,))]
+        self._groupNames[subName] = obj.Name
         return obj.Name
 
     def _writeSif(self):

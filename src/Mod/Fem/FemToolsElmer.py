@@ -79,6 +79,7 @@ _SPECIAL_MEMBERS = [
         ("App::TextDocument",),
         ("Fem::FemResultObjectPython",),
         ("Fem::FemResultObject",),
+        ("Fem::FemMeshShapeNetgenObject",),
 ]
 
 

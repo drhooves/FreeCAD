@@ -66,6 +66,7 @@ class FemWorkbench (Workbench):
         import PyGui._CommandFemSolverControl
         import PyGui._CommandFemSolverElmer
         import PyGui._CommandFemElmerFreeText
+        import PyGui._CommandFemOpenParaview
         import PyGui._CommandFemSolverRun
         import PyGui._CommandFemSolverZ88
 

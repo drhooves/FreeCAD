@@ -104,6 +104,7 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
          << "FEM_SolverControl"
          << "FEM_SolverRun"
          << "Separator"
+         << "FEM_OpenParaview"
          << "FEM_ResultsPurge"
          << "FEM_ResultShow";
 
@@ -183,6 +184,7 @@ Gui::MenuItem* Workbench::setupMenuBar() const
          << "FEM_SolverControl"
          << "FEM_SolverRun"
          << "Separator"
+         << "FEM_OpenParaview"
          << "FEM_ResultsPurge"
          << "FEM_ResultShow";
 

@@ -163,15 +163,16 @@ class TestCantileverGui(unittest.TestCase):
             raise
 
     def tearDown(self):
-        (App.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")
-                .SetString("WorkingDir", self.prevSetting))
+        pref = App.ParamGet(
+                "User parameter:BaseApp/Preferences/Mod/Fem/General")
+        pref.SetString("WorkingDir", self.prevSetting)
         App.closeDocument(self.doc.Name)
 
     def testWithSetting(self):
         try:
             workingDir = tempfile.mkdtemp()
-            (App.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")
-                    .SetString("WorkingDir", workingDir))
+            pref = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")
+            pref.SetString("WorkingDir", workingDir)
             self._runTest()
             caseDir = os.path.join(workingDir, self.analysis.Label)
             self._checkResult(caseDir)

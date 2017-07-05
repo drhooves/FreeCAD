@@ -869,6 +869,36 @@ def create_test_results():
 
     print('Results copied to the appropriate FEM test dirs in: ' + temp_dir)
 
+    # Flow1D
+    FreeCAD.open(Flow1D_thermomech_save_fc_file)
+    FemGui.setActiveAnalysis(FreeCAD.ActiveDocument.Analysis)
+    fea = FemToolsCcx.FemToolsCcx()
+    fea.reset_all()
+    fea.run()
+
+    fea.load_results()
+    '''
+
+    stats_flow1D = []  # we only have one result object so we are fine we have many !!!!
+    for s in stat_types:
+        stats_flow1D.append("{}: {}\n".format(s, fea.get_stats(s)))
+    thermomech_expected_values_file = thermomech_analysis_dir + '/Flow1D_thermomech_expected_values'
+    f = open(thermomech_expected_values_file, 'w')
+    for s in stats_flow1D:
+        f.write(s)
+    f.close()
+
+    # could be added in FemToolsCcx to the self object as an Attribut
+    frd_result_file = os.path.splitext(fea.inp_file_name)[0] + '.frd'
+    dat_result_file = os.path.splitext(fea.inp_file_name)[0] + '.dat'
+
+    frd_thermomech_test_result_file = thermomech_analysis_dir + '/Flow1D_thermomech.frd'
+    dat_thermomech_test_result_file = thermomech_analysis_dir + '/Flow1D_thermomech.dat'
+    shutil.copyfile(frd_result_file, frd_thermomech_test_result_file)
+    shutil.copyfile(dat_result_file, dat_thermomech_test_result_file)
+
+    print('Results copied to the appropriate FEM test dirs in: ' + temp_dir)
+    '''
 
 '''
 update the results of FEM unit tests:

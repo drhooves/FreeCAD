@@ -32,6 +32,7 @@ import tempfile
 import unittest
 
 mesh_name = 'Mesh'
+stat_types = ["U1", "U2", "U3", "Uabs", "Sabs", "MaxPrin", "MidPrin", "MinPrin", "MaxShear", "Peeq", "Temp", "MFlow", "NPress"]
 
 home_path = FreeCAD.getHomePath()
 temp_dir = tempfile.gettempdir() + '/FEM_unittests'
@@ -749,7 +750,6 @@ def compare_stats(fea, stat_file=None):
         sf_content = sf.readlines()
         sf.close()
         sf_content = force_unix_line_ends(sf_content)
-    stat_types = ["U1", "U2", "U3", "Uabs", "Sabs"]
     stats = []
     for s in stat_types:
         stats.append("{}: {}\n".format(s, fea.get_stats(s)))
@@ -802,7 +802,6 @@ def create_test_results():
     fea.run()
 
     fea.load_results()
-    stat_types = ["U1", "U2", "U3", "Uabs", "Sabs"]
     stats_static = []  # we only have one result object so we are fine
     for s in stat_types:
         stats_static.append("{}: {}\n".format(s, fea.get_stats(s)))
@@ -850,7 +849,6 @@ def create_test_results():
     fea.run()
 
     fea.load_results()
-    stat_types = ["U1", "U2", "U3", "Uabs", "Sabs"]
     stats_thermomech = []  # we only have one result object so we are fine
     for s in stat_types:
         stats_thermomech.append("{}: {}\n".format(s, fea.get_stats(s)))
@@ -880,7 +878,6 @@ def create_test_results():
 
     fea.load_results()
     '''
-    stat_types = ["U1", "U2", "U3", "Uabs", "Sabs"]
 
     stats_flow1D = []  # we only have one result object so we are fine we have many !!!!
     for s in stat_types:

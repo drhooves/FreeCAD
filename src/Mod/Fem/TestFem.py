@@ -698,7 +698,7 @@ class FemCcxAnalysisTest(unittest.TestCase):
         self.assertTrue(True if fea.inp_file_name == Flow1D_thermomech_analysis_inp_file else False,
                         "Setting inp file name to {} failed".format(Flow1D_thermomech_analysis_inp_file))
 
-        fcc_print('Checking FEM frd file read from thermomech analysis...')
+        fcc_print('Checking FEM frd file read from Flow1D thermomech analysis...')
         fea.load_results()
         self.assertTrue(fea.results_present, "Cannot read results from {}.frd frd file".format(fea.base_name))
 

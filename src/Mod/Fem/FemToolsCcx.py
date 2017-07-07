@@ -268,6 +268,7 @@ class FemToolsCcx(FemTools.FemTools):
         import os
         import importCcxFrdResults
         frd_result_file = os.path.splitext(self.inp_file_name)[0] + '.frd'
+        print frd_result_file
         if os.path.isfile(frd_result_file):
             result_name_prefix = 'CalculiX_' + self.solver.AnalysisType + '_'
             importCcxFrdResults.importFrd(frd_result_file, self.analysis, result_name_prefix)

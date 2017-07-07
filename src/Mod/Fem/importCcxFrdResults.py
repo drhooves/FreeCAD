@@ -529,6 +529,12 @@ def readResult(frd_input):
             elements_found = False
 
     frd_file.close()
+
+    # some temp prints
+    # print nodes
+    # print elements_seg3
+    # print results
+
     if not nodes:
         FreeCAD.Console.PrintError('FEM: No nodes found in Frd file.\n')
     return {'Nodes': nodes,

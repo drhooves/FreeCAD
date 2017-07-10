@@ -172,16 +172,16 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     model->setCommand("M&odel");
     *model << "FEM_Analysis"
            << "Separator"
-           << mech
-           << thermal
-           << fluid
-           << "Separator"
            << "FEM_MaterialSolid"
            << "FEM_MaterialFluid"
            << "FEM_MaterialMechanicalNonlinear"
            << "FEM_ElementGeometry1D"
            << "FEM_ElementGeometry2D"
-           << "FEM_ElementFluid1D";
+           << "FEM_ElementFluid1D"
+           << "Separator"
+           << mech
+           << thermal
+           << fluid;
 
     Gui::MenuItem* mesh = new Gui::MenuItem;
     root->insertItem(item, mesh);

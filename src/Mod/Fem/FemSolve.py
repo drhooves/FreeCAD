@@ -110,23 +110,19 @@ class Machine(FemSolverTasks.Base):
         self.results = None
         self.target = target
         self._state = CHECK
+        self._pendingState = CHECK
         self._isReset = False
 
     @property
     def state(self):
         return self._state
 
-    @state.setter
-    def state(self, value):
-        self._state = value
-        FemSignal.notify(self.signalState)
-
     def run(self):
-        self._clearReset()
-        localState = self.state
+        self._isReset = False
+        self._pendingState = self.state
         while (not self.aborted and not self.failed
-                and localState <= self.target):
-            task = self._getTask(localState)
+                and self._pendingState <= self.target):
+            task = self._getTask(self._pendingState)
             self._runTask(task)
             self.report.extend(task.report)
             if task.failed:
@@ -134,22 +130,19 @@ class Machine(FemSolverTasks.Base):
             elif task.aborted:
                 self.abort()
             else:
-                localState += 1
-        self._updateState(localState)
+                self._pendingState += 1
+        self._applyPending()
 
     def reset(self, newState=CHECK):
-        if self.state > newState:
+        if newState < self._pendingState:
             self._isReset = True
             self._state = newState
             FemSignal.notify(self.signalState)
 
-    def _updateState(self, state):
+    def _applyPending(self):
         if not self._isReset:
-            self._isReset = False
-            self._state = state
+            self._state = self._pendingState
             FemSignal.notify(self.signalState)
-
-    def _clearReset(self):
         self._isReset = False
 
     def _runTask(self, task):
@@ -179,6 +172,9 @@ class _DocObserver(object):
         "Fem::Constraint",
         "App::MaterialObject",
     ]
+    _BLACKLIST_PROPS = [
+        "Label",
+    ]
 
     @classmethod
     def attach(cls):
@@ -193,20 +189,25 @@ class _DocObserver(object):
         self._docChanged(obj)
 
     def slotChangedObject(self, obj, prop):
-        analysis = FemMisc.findAnalysisOfMember(obj)
-        for m in _machines.itervalues():
-            if analysis == m.analysis and obj == m.solver:
-                m.reset()
-        self._docChanged(obj)
+        if prop not in self._BLACKLIST_PROPS:
+            analysis = FemMisc.findAnalysisOfMember(obj)
+            for m in _machines.itervalues():
+                if analysis == m.analysis and obj == m.solver:
+                    print "Reset because of: %s.%s" % (obj.Label, prop)
+                    m.reset()
+        self._docChanged(obj, prop)
 
-    def _docChanged(self, obj):
-        if self._partOfModel(obj):
+    def _docChanged(self, obj, prop=None):
+        if self._partOfModel(obj, prop):
             analysis = FemMisc.findAnalysisOfMember(obj)
             for m in _machines.itervalues():
                 if analysis == m.analysis:
+                    print "Reset because of: %s" % obj.Label
                     m.reset()
 
-    def _partOfModel(self, obj):
+    def _partOfModel(self, obj, prop):
+        if prop in self._BLACKLIST_PROPS:
+            return False
         for t in self._WHITELIST:
             if obj.isDerivedFrom(t):
                 return True

@@ -88,6 +88,7 @@ class ControlTaskPanel(QtCore.QObject):
         self.machineTimeChanged.connect(self.form.setTime)
         self.machineStateChanged.connect(
                 lambda: self.form.updateState(self.machine))
+        self.machineChanged.connect(self._updateTimer)
 
         # Set initial machine. Signal updates the widget.
         self.machineChanged.connect(self.updateWidget)
@@ -123,11 +124,6 @@ class ControlTaskPanel(QtCore.QObject):
     def abort(self):
         self.machine.abort()
 
-    @QtCore.Slot(object)
-    def _displayReport(self, machine):
-        text = _REPORT_ERR if machine.failed else None
-        FemReport.display(machine.report, _REPORT_TITLE, text)
-
     @QtCore.Slot()
     def updateType(self):
         if self.machine.solver.AnalysisType != self.form.analysisType():
@@ -138,12 +134,24 @@ class ControlTaskPanel(QtCore.QObject):
         self.form.setDirectory(self.machine.directory)
         self.form.setSupportedTypes(self.machine.solver.SupportedTypes)
         self.form.setAnalysisType(self.machine.solver.AnalysisType)
+        self.form.setOutput(self.machine.solve.output)
+        self.form.setTime(self.machine.time)
         self.form.updateState(self.machine)
 
     @QtCore.Slot()
     def updateMachine(self):
         path = self.form.directory()
         self.machine = FemSolve.getMachine(self.machine.solver, path)
+
+    @QtCore.Slot()
+    def _updateTimer(self):
+        if self.machine.running:
+            self._timer.start()
+
+    @QtCore.Slot(object)
+    def _displayReport(self, machine):
+        text = _REPORT_ERR if machine.failed else None
+        FemReport.display(machine.report, _REPORT_TITLE, text)
 
     def getStandardButtons(self):
         return int(QtGui.QDialogButtonBox.Close)

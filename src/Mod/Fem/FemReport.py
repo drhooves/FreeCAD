@@ -20,32 +20,74 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "_ViewProviderFemSolverElmer"
-__author__ = "Markus Hovorka, Bernd Hahnebach"
+__title__ = "Report"
+__author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
-import FreeCADGui as Gui
-import PyGui._TaskPanelFemSolverControl
-import FemSolve
+import FreeCAD as App
 
 
-class _ViewProviderFemSolverElmer(object):
-    """Proxy for FemSolverElmers View Provider."""
+INFO = 10
+WARNING = 20
+ERROR = 30
 
-    def __init__(self, vobj):
-        vobj.Proxy = self
 
-    def getIcon(self):
-        return ":/icons/fem-elmer.png"
+def display(report, title=None, text=None):
+    if App.GuiUp:
+        displayGui(report, title, text)
+    else:
+        displayLog(report)
 
-    def setEdit(self, vobj, mode=0):
-        machine = FemSolve.getMachine(vobj.Object)
-        task = PyGui._TaskPanelFemSolverControl.ControlTaskPanel(machine)
-        Gui.Control.showDialog(task)
 
-    def doubleClicked(self, vobj):
-        Gui.ActiveDocument.setEdit(vobj.Object.Name)
+def displayGui(report, title=None, text=None):
+    import FreeCADGui as Gui
+    import FemReportDialog
+    if not report.isEmpty():
+        mw = Gui.getMainWindow()
+        dialog = FemReportDialog.ReportDialog(
+            report, title, text, mw)
+        dialog.exec_()
 
-    def attach(self, vobj):
-        pass
+
+def displayLog(report):
+    for i in report.infos:
+        App.Console.PrintLog("%s\n" % i)
+    for w in report.warnings:
+        App.Console.PrintWarning("%s\n" % w)
+    for e in report.errors:
+        App.Console.PrintError("%s\n" % e)
+
+
+class Report(object):
+
+    def __init__(self):
+        self.infos = []
+        self.warnings = []
+        self.errors = []
+
+    def extend(self, report):
+        self.infos.extend(report.infos)
+        self.warnings.extend(report.warnings)
+        self.errors.extend(report.errors)
+
+    def getLevel(self):
+        if self.errors:
+            return ERROR
+        if self.warnings:
+            return WARNINGS
+        if self.infos:
+            return INFO
+        return None
+
+    def isEmpty(self):
+        return not (self.infos or self.warnings or self.errors)
+
+    def appendInfo(self, msg):
+        self.infos.append(msg)
+
+    def appendWarning(self, msg):
+        self.warnings.append(msg)
+
+    def appendError(self, msg):
+        self.errors.append(msg)

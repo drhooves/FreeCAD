@@ -35,19 +35,27 @@ INSTALL(
         FemGmshTools.py
         FemInputWriter.py
         FemInputWriterCcx.py
-        FemInputWriterElmer.py
+	FemElmerWriter.py
         FemInputWriterZ88.py
         FemMesh2Mesh.py
         FemMeshTools.py
         FemSelectionObserver.py
         FemTools.py
         FemToolsCcx.py
-        FemToolsElmer.py
+	FemElmerTasks.py
         FemToolsZ88.py
         ObjectsFem.py
 	FemDefsElmer.py
 	sifio.py
-	Report.py
+	FemReport.py
+	FemReportDialog.py
+	FemMisc.py
+	FemSettings.py
+	FemSolve.py
+	FemSolverTasks.py
+	FemTempfile.py
+	FemSignal.py
+	FemTask.py
         TestFem.py
         TestElmerSolver.py
     DESTINATION
@@ -110,6 +118,7 @@ INSTALL(
         PyGui/_TaskPanelFemMeshRegion.py
         PyGui/_TaskPanelFemResultShow.py
         PyGui/_TaskPanelFemSolverCalculix.py
+	PyGui/_TaskPanelFemSolverControl.py
         PyGui/_ViewProviderFemConstraintSelfWeight.py
         PyGui/_ViewProviderFemElementFluid1D.py
         PyGui/_ViewProviderFemElementGeometry1D.py

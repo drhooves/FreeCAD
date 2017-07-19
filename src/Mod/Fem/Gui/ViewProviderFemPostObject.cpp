@@ -321,6 +321,9 @@ void ViewProviderFemPostObject::update3D() {
     normals = pntData->GetNormals();
     tcoords = pntData->GetTCoords();
 
+    std::cout << *pntData << std::endl;
+    std::cout << *points << std::endl;
+
     // write out point data if any
     WritePointData(points, normals, tcoords);
     bool ResetColorBarRange = true;

@@ -1,6 +1,6 @@
 # ***************************************************************************
 # *                                                                         *
-# *   Copyright (c) 2016 - Markus Hovorka <m.hovorka@live.de>               *
+# *   Copyright (c) 2013-2015 - Markus Hovorka <m.hovorka@live.de>          *
 # *                                                                         *
 # *   This program is free software; you can redistribute it and/or modify  *
 # *   it under the terms of the GNU Lesser General Public License (LGPL)    *
@@ -20,32 +20,63 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "_ViewProviderFemSolverElmer"
-__author__ = "Markus Hovorka, Bernd Hahnebach"
-__url__ = "http://www.freecadweb.org"
+
+import FreeCAD as App
 
 
-import FreeCADGui as Gui
-import PyGui._TaskPanelFemSolverControl
-import FemSolve
+TEMPORARY = "temporary"
+BESIDE = "beside"
+CUSTOM = "custom"
+
+_CCX_PARAM = "User parameter:BaseApp/Preferences/Mod/Fem/Ccx"
+_ELMER_PARAM = "User parameter:BaseApp/Preferences/Mod/Fem/Elmer"
 
 
-class _ViewProviderFemSolverElmer(object):
-    """Proxy for FemSolverElmers View Provider."""
+class _BinaryDlg(object):
 
-    def __init__(self, vobj):
-        vobj.Proxy = self
+    def __init__(self, default, param, useDefault, customPath):
+        self.default = default
+        self.param = param
+        self.useDefault = useDefault
+        self.customPath = customPath
 
-    def getIcon(self):
-        return ":/icons/fem-elmer.png"
+    def getBinary(self):
+        paramObj = App.ParamGet(self.param)
+        if paramObj.GetBool(self.useDefault):
+            return self.default
+        return paramObj.GetString(self.customPath)
 
-    def setEdit(self, vobj, mode=0):
-        machine = FemSolve.getMachine(vobj.Object)
-        task = PyGui._TaskPanelFemSolverControl.ControlTaskPanel(machine)
-        Gui.Control.showDialog(task)
 
-    def doubleClicked(self, vobj):
-        Gui.ActiveDocument.setEdit(vobj.Object.Name)
+_BINARIES = {
+    "ElmerSolver": _BinaryDlg(
+        default="ElmerSolver",
+        param=_ELMER_PARAM,
+        useDefault="UseStandardElmerLocation",
+        customPath="elmerBinaryPath"),
+    "ElmerGrid": _BinaryDlg(
+        default="ElmerGrid",
+        param=_ELMER_PARAM,
+        useDefault="UseStandardGridLocation",
+        customPath="gridBinaryPath"),
+}
 
-    def attach(self, vobj):
-        pass
+
+def getBinary(name):
+    if name in _BINARIES:
+        return _BINARIES[name].getBinary()
+    return None
+
+
+def getCustomDir():
+    param = App.ParamGet(_ELMER_PARAM)
+    return param.GetString("CustomDirectoryPath")
+
+
+def getDirSetting():
+    param = App.ParamGet(_ELMER_PARAM)
+    if param.GetBool("UseTempDirectory"):
+        return TEMPORARY
+    elif param.GetBool("UseBesideDirectory"):
+        return BESIDE
+    elif param.GetBool("UseCustomDirectory"):
+        return CUSTOM

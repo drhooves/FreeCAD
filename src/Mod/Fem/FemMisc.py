@@ -1,6 +1,6 @@
 # ***************************************************************************
 # *                                                                         *
-# *   Copyright (c) 2016 - Markus Hovorka <m.hovorka@live.de>               *
+# *   Copyright (c) 2013-2015 - Markus Hovorka <m.hovorka@live.de>          *
 # *                                                                         *
 # *   This program is free software; you can redistribute it and/or modify  *
 # *   it under the terms of the GNU Lesser General Public License (LGPL)    *
@@ -20,32 +20,56 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "_ViewProviderFemSolverElmer"
-__author__ = "Markus Hovorka, Bernd Hahnebach"
-__url__ = "http://www.freecadweb.org"
+
+import os.path
+import shutil
 
 
-import FreeCADGui as Gui
-import PyGui._TaskPanelFemSolverControl
-import FemSolve
+def findAnalysisOfMember(member):
+    if member is None:
+        raise ValueError("Member must not be None")
+    for obj in member.Document.Objects:
+        if obj.isDerivedFrom("Fem::FemAnalysis"):
+            if member in obj.Member:
+                return obj
+    return None
 
 
-class _ViewProviderFemSolverElmer(object):
-    """Proxy for FemSolverElmers View Provider."""
+def getMember(analysis, baseType, pyType=None):
+    if analysis is None:
+        raise ValueError("Analysis must not be None")
+    matching = []
+    for m in analysis.Member:
+        if isOfType(m, baseType, pyType):
+            matching.append(m)
+    return matching
 
-    def __init__(self, vobj):
-        vobj.Proxy = self
 
-    def getIcon(self):
-        return ":/icons/fem-elmer.png"
+def getSingleMember(analysis, baseType, pyType=None):
+    objs = getMember(analysis, baseType, pyType)
+    return objs[0] if objs else None
 
-    def setEdit(self, vobj, mode=0):
-        machine = FemSolve.getMachine(vobj.Object)
-        task = PyGui._TaskPanelFemSolverControl.ControlTaskPanel(machine)
-        Gui.Control.showDialog(task)
 
-    def doubleClicked(self, vobj):
-        Gui.ActiveDocument.setEdit(vobj.Object.Name)
+def wipeDir(directory):
+    for node in os.listdir(directory):
+        path = os.path.join(directory, node)
+        if os.path.isfile(path):
+            os.unlink(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
 
-    def attach(self, vobj):
-        pass
+
+def isOfType(obj, baseType, pyType=None):
+    if obj.isDerivedFrom(baseType):
+        if pyType is None:
+            return True
+        if hasattr(obj, "Proxy") and obj.Proxy.Type == pyType:
+            return True
+    return False
+
+
+def getUniqueName(obj):
+    name = obj.Name
+    if hasattr(obj, "Document"):
+        name = "%s.%s" % (obj.Document.Name, name)
+    return name

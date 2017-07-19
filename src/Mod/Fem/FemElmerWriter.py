@@ -20,19 +20,24 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "FemInputWriterElmer"
+
+__title__ = "FemWriterElmer"
 __author__ = "Markus Hovorka, Bernd Hahnebach"
 __url__ = "http://www.freecadweb.org"
 
+
 ## \addtogroup FEM
 #  @{
+
 
 from FreeCAD import Console
 import os.path
 import subprocess
 
+import Units
 import Fem
-from Units import Quantity
+import FemMisc
+import FemSettings
 import ObjectsFem
 import FemGmshTools
 import FemDefsElmer
@@ -53,6 +58,17 @@ CONSTS_DEF = {
     "BoltzmannConstant": 1.3807e-23,
     "UnitCharge": 1.602e-19,
 }
+
+
+SUPPORTED = [
+        ("Fem::ConstraintFixed",),
+        ("Fem::ConstraintForce",),
+        ("Fem::ConstraintDisplacement",),
+        ("Fem::ConstraintTemperature",),
+        ("Fem::ConstraintSelfWeight",),
+        ("Fem::ConstraintInitialTemperature",),
+        ("Fem::FeaturePython", "FemConstraintSelfWeight",),
+]
 
 
 class Writer(object):
@@ -85,11 +101,10 @@ class Writer(object):
     # If the file does not exist, an example with the same name is created.
     # The default output file name is the same with a different suffix.
 
-    def __init__(self, analysis, solver, directory, gridBin):
+    def __init__(self, analysis, solver, directory):
         self.analysis = analysis
         self.solver = solver
         self.directory = directory
-        self.gridBin = gridBin
         self._groupNames = dict()
         self._bndSections = dict()
 
@@ -100,22 +115,8 @@ class Writer(object):
         self._recreateMesh()
         self._writeMesh()
 
-    def _getOfType(self, baseType, pyType=None):
-        matching = []
-        for m in self.analysis.Member:
-            if m.isDerivedFrom(baseType):
-                if pyType is None:
-                    matching.append(m)
-                elif hasattr(m, "Proxy") and m.Proxy.Type == pyType:
-                    matching.append(m)
-        return matching
-
-    def _getFirstOfType(self, baseType, pyType=None):
-        objs = self._getOfType(baseType, pyType)
-        return objs[0] if objs else None
-
     def _recreateMesh(self):
-        mesh = self._getFirstOfType("Fem::FemMeshObject")
+        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
         FemGmshTools.FemGmshTools(mesh).create_mesh()
 
     def _writeStartinfo(self):
@@ -129,9 +130,9 @@ class Writer(object):
 
     def _writeMesh(self):
         unvPath = os.path.join(self.directory, "mesh.unv")
-        mesh = self._getFirstOfType("Fem::FemMeshObject")
+        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
         Fem.export([mesh], unvPath)
-        args = [self.gridBin,
+        args = [FemSettings.getBinary("ElmerGrid"),
                 _ELMERGRID_IFORMAT,
                 _ELMERGRID_OFORMAT,
                 unvPath,
@@ -140,7 +141,7 @@ class Writer(object):
         subprocess.call(args)
 
     def _purgeMeshGroups(self):
-        mesh = self._getFirstOfType("Fem::FemMeshObject")
+        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
         for grp in mesh.MeshGroupList:
             grp.Document.removeObject(grp.Name)
         mesh.MeshGroupList = []
@@ -148,7 +149,7 @@ class Writer(object):
     def _getGroupName(self, subName):
         if subName in self._groupNames:
             return self._groupNames[subName]
-        mesh = self._getFirstOfType("Fem::FemMeshObject")
+        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
         obj = ObjectsFem.makeMeshGroup(mesh, name=subName)
         obj.References += [(mesh.Part, (subName,))]
         self._groupNames[subName] = obj.Name
@@ -196,7 +197,6 @@ class Writer(object):
         s["Timestepping Method"] = "BDF"
         s["BDF Order"] = 1
         s["Post File"] = sifio.FileAttr("case.vtu")
-        s["Coordinate scaling"] = 0.001
         s["Use Mesh Names"] = True
         return s
 
@@ -211,44 +211,47 @@ class Writer(object):
 
     def _getBodyForces(self):
         sections = []
-        obj = self._getFirstOfType(
-                "Fem::FeaturePython", "FemConstraintSelfWeight")
-        matObj = self._getFirstOfType("App::MaterialObjectPython")
-        density = self._getInUnit(matObj.Material["Density"], "kg/m^3")
+        obj = FemMisc.getSingleMember(
+                self.analysis, "Fem::FeaturePython", "FemConstraintSelfWeight")
+        matObj = FemMisc.getSingleMember(self.analysis, "App::MaterialObjectPython")
+        density = self._getInUnit(matObj.Material["Density"], "kg/mm^3")
         if obj is not None:
             sections.append(self._getSelfweight(obj, density))
         return sections
 
     def _getBoundaryConditions(self):
-        for obj in self._getOfType("Fem::ConstraintFixed"):
+        for obj in FemMisc.getMember(self.analysis, "Fem::ConstraintFixed"):
             self._createFixeds(obj)
-        for obj in self._getOfType("Fem::ConstraintForce"):
+        for obj in FemMisc.getMember(self.analysis, "Fem::ConstraintForce"):
             self._createForces(obj)
-        for obj in self._getOfType("Fem::ConstraintDisplacement"):
+        for obj in FemMisc.getMember(self.analysis, "Fem::ConstraintDisplacement"):
             self._createDisplacements(obj)
         if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
-            for obj in self._getOfType("Fem::ConstraintTemperature"):
+            for obj in FemMisc.getMember(self.analysis, "Fem::ConstraintTemperature"):
                 self._createTemps(obj)
         return self._bndSections.values()
 
     def _getInitialConditions(self):
         sections = []
         if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
-            obj = self._getFirstOfType("Fem::ConstraintInitialTemperature")
+            obj = FemMisc.getSingleMember(
+                    self.analysis, "Fem::ConstraintInitialTemperature")
             if obj is not None:
                 sections.append(self._getInitialTemp(obj))
         return sections
 
     def _getMaterials(self, bodyMaterials):
         sections = []
-        for obj in self._getOfType("App::MaterialObjectPython"):
+        for obj in FemMisc.getMember(self.analysis, "App::MaterialObjectPython"):
             s = self._getMaterialSection(obj)
             self._updateBodyMaterials(bodyMaterials, obj, s)
             sections.append(s)
         return sections
 
     def _getSolidNames(self):
-        shape = self._getFirstOfType("Fem::FemMeshObject").Part.Shape
+        mesh = FemMisc.getSingleMember(
+            self.analysis, "Fem::FemMeshObject")
+        shape = mesh.Part.Shape
         return ["%s%d" % (_SOLID_PREFIX, i+1)
                 for i in range(len(shape.Solids))]
 
@@ -256,23 +259,24 @@ class Writer(object):
         m = obj.Material
         s = sifio.createSection(sifio.MATERIAL)
         s["Density"] = self._getInUnit(
-                m["Density"], "kg/m^3")
+                m["Density"], "kg/mm^3")
         s["Youngs Modulus"] = self._getInUnit(
-                m["YoungsModulus"], "Pa")
+                m["YoungsModulus"], "MPa")
         s["Poisson ratio"] = float(m["PoissonRatio"])
         s["Heat Conductivity"] = self._getInUnit(
-                m["ThermalConductivity"], "W/m/K")
+                m["ThermalConductivity"], "W/mm/K")
         s["Heat expansion Coefficient"] = self._getInUnit(
-                m["ThermalExpansionCoefficient"], "m/m/K")
+                m["ThermalExpansionCoefficient"], "mm/mm/K")
         if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
-            tempObj = self._getFirstOfType("Fem::ConstraintInitialTemperature")
+            tempObj = FemMisc.getSingleMember(
+                    self.analysis, "Fem::ConstraintInitialTemperature")
             if tempObj is not None:
                 s["Reference Temperature"] = tempObj.initialTemperature
         return s
 
     def _updateBodyMaterials(self, bodyMaterials, obj, section):
         if len(obj.References) == 0:
-            for name, material in dict(bodyMaterials):
+            for name, material in dict(bodyMaterials).iteritems():
                 bodyMaterials[name] = section
         else:
             for part, ref in obj.References:
@@ -413,7 +417,7 @@ class Writer(object):
         return s
 
     def _getInUnit(self, value, unitStr):
-        return float(Quantity(value).getValueAs(unitStr))
+        return float(Units.Quantity(value).getValueAs(unitStr))
 
     def _getBndSection(self, name):
         if name in self._bndSections:

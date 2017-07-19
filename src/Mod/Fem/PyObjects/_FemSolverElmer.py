@@ -26,6 +26,8 @@ __url__ = "http://www.freecadweb.org"
 
 
 import FemDefsElmer
+import FemElmerTasks
+import FemSolve
 
 
 class _FemSolverElmer(object):
@@ -36,17 +38,34 @@ class _FemSolverElmer(object):
 
     def __init__(self, obj):
         obj.Proxy = self
+        self.Object = obj
 
         # Prop_None     = 0
         # Prop_ReadOnly = 1
         # Prop_Transient= 2
         # Prop_Hidden   = 4
         # Prop_Output   = 8
-        attr = 1
+
+        obj.addProperty(
+                "App::PropertyPythonObject", "buildMachine",
+                "Base", "", 4)
+        obj.buildMachine = self._buildMachine
+
+        obj.addProperty(
+                "App::PropertyPythonObject", "SupportedTypes",
+                "Base", "", 4)
+        obj.SupportedTypes = FemDefsElmer.SUPPORTED
+
+        obj.addProperty(
+                "App::PropertyLink", "ElmerResult",
+                "Base", "", 4|8)
+        obj.addProperty(
+                "App::PropertyLink", "ElmerOutput",
+                "Base", "", 4|8)
 
         obj.addProperty(
                 "App::PropertyString", "SolverType",
-                "Base", "Type of the solver.", attr)
+                "Base", "Type of the solver.", 1)
         obj.addProperty(
                 "App::PropertyEnumeration", "AnalysisType",
                 "Fem", "Type of the analysis.")
@@ -84,6 +103,14 @@ class _FemSolverElmer(object):
         obj.TermoLinConvergenceTolerance = 1e-10
         obj.TermoNLinMaxIterations = 20
         obj.TermoNLinConvergenceTolerance = 1e-7
+
+    def _buildMachine(self, directory):
+        machine = FemSolve.Machine(self.Object, directory)
+        machine.check = FemElmerTasks.Check(self.Object, directory)
+        machine.prepare = FemElmerTasks.Prepare(self.Object, directory)
+        machine.solve = FemElmerTasks.Solve(self.Object, directory)
+        machine.results = FemElmerTasks.Results(self.Object, directory)
+        return machine
 
     def execute(self, obj):
         return True

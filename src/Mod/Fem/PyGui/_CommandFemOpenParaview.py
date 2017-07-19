@@ -33,9 +33,6 @@ from PySide import QtCore
 import FreeCAD as App
 import FreeCADGui as Gui
 from FemCommands import FemCommands
-import FemGui
-import FemToolsElmer
-import Report
 
 
 _PARAVIEW_BIN = "paraview"
@@ -58,17 +55,7 @@ class _CommandFemOpenParaview(FemCommands):
         self.is_active = 'with_analysis'
 
     def Activated(self):
-        analysis = FemGui.getActiveAnalysis()
-        caseDir = FemToolsElmer.findCaseDir(analysis)
-        if caseDir != "":
-            resultPath = os.path.join(caseDir, _RESULT_NAME)
-            if os.path.isfile(resultPath):
-                QtCore.QProcess.startDetached(
-                        _PARAVIEW_BIN, [resultPath])
-                return
-        report = Report.Data()
-        report.appendError("solve_first")
-        Report.display(report)
+        pass
         
 
 Gui.addCommand('FEM_OpenParaview', _CommandFemOpenParaview())

@@ -174,6 +174,8 @@ class _DocObserver(object):
     ]
     _BLACKLIST_PROPS = [
         "Label",
+        "ElmerOutput",
+        "ElmerResult"
     ]
 
     @classmethod

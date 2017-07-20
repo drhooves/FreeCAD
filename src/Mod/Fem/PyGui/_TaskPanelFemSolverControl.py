@@ -109,7 +109,7 @@ class ControlTaskPanel(QtCore.QObject):
 
     @QtCore.Slot()
     def write(self):
-        self.machine.reset(FemSolve.PREPARE)
+        self.machine.reset()
         self.machine.target = FemSolve.PREPARE
         self.machine.start()
 

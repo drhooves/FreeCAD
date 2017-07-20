@@ -40,17 +40,6 @@ class Base(FemTask.Thread):
 
 class Check(Base):
 
-    _SPECIAL_MEMBERS = [
-            ("App::MaterialObjectPython",),
-            ("Fem::FemMeshObject",),
-            ("Fem::FemSolverObjectPython",),
-            ("Fem::FemMeshObjectPython",),
-            ("App::TextDocument",),
-            ("Fem::FemResultObjectPython",),
-            ("Fem::FemResultObject",),
-            ("Fem::FemMeshShapeNetgenObject",),
-    ]
-
     def checkMesh(self):
         meshes = FemMisc.getMember(
             self.analysis, "Fem::FemMeshObject")
@@ -79,16 +68,14 @@ class Check(Base):
 
     def checkSupported(self, allSupported):
         for m in self.analysis.Member:
-            supported = False
-            for sm in self._SPECIAL_MEMBERS:
-                if FemMisc.isOfType(m, *sm):
-                    supported = True
-            for sc in allSupported:
-                if FemMisc.isOfType(m, *sc):
-                    supported = True
-            if not supported:
-                self.report.appendWarning(
-                    "Ignoring unsupported constraint: %s" % m.Label)
+            if FemMisc.isOfType(m, "Fem::Constraint"):
+                supported = False
+                for sc in allSupported:
+                    if FemMisc.isOfType(m, *sc):
+                        supported = True
+                if not supported:
+                    self.report.appendWarning(
+                        "Ignored unsupported constraint: %s" % m.Label)
         return True
 
 

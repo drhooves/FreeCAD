@@ -31,7 +31,7 @@ from PySide import QtCore
 
 
 ERROR_COLOR = "red"
-WARNING_COLOR = "yellow"
+WARNING_COLOR = "#ffaa00"
 INFO_COLOR = "blue"
 
 

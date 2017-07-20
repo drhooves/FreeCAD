@@ -66,6 +66,7 @@ INSTALL(
     FILES
         PyObjects/__init__.py
         PyObjects/_FemConstraintSelfWeight.py
+	PyObjects/_FemConstraintBodyHeatFlux.py
         PyObjects/_FemElementFluid1D.py
         PyObjects/_FemElementGeometry1D.py
         PyObjects/_FemElementGeometry2D.py
@@ -109,6 +110,7 @@ INSTALL(
 	PyGui/_CommandFemOpenParaview.py
         PyGui/_CommandFemSolverRun.py
         PyGui/_CommandFemSolverZ88.py
+	PyGui/_CommandFemConstraintBodyHeatFlux.py
         PyGui/_TaskPanelFemElementFluid1D.py
         PyGui/_TaskPanelFemElementGeometry1D.py
         PyGui/_TaskPanelFemElementGeometry2D.py
@@ -120,6 +122,7 @@ INSTALL(
         PyGui/_TaskPanelFemSolverCalculix.py
 	PyGui/_TaskPanelFemSolverControl.py
         PyGui/_ViewProviderFemConstraintSelfWeight.py
+	PyGui/_ViewProviderFemConstraintBodyHeatFlux.py
         PyGui/_ViewProviderFemElementFluid1D.py
         PyGui/_ViewProviderFemElementGeometry1D.py
         PyGui/_ViewProviderFemElementGeometry2D.py

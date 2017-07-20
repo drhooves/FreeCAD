@@ -217,6 +217,12 @@ class Writer(object):
         density = self._getInUnit(matObj.Material["Density"], "kg/mm^3")
         if obj is not None:
             sections.append(self._getSelfweight(obj, density))
+        if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
+            obj = FemMisc.getSingleMember(
+                    self.analysis, "Fem::FeaturePython",
+                    "FemConstraintBodyHeatFlux")
+            if obj is not None:
+                sections.append(self._getBodyHeatFlux(obj))
         return sections
 
     def _getBoundaryConditions(self):
@@ -367,6 +373,11 @@ class Writer(object):
         s["Stress Bodyforce 1"] = float(gravity * obj.Gravity_x * density)
         s["Stress Bodyforce 2"] = float(gravity * obj.Gravity_y * density)
         s["Stress Bodyforce 3"] = float(gravity * obj.Gravity_z * density)
+        return s
+
+    def _getBodyHeatFlux(self, obj):
+        s = sifio.createSection(sifio.BODY_FORCE)
+        s["Heat Source"] = float(obj.HeatFlux)
         return s
 
     def _createFixeds(self, obj):

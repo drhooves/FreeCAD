@@ -130,6 +130,7 @@ class Thread(Task):
         super(Thread, self).start()
         self._thread = threading.Thread(
             target=self._protector)
+        self._thread.daemon = True
         self._thread.start()
         self._attachObserver()
 
@@ -142,7 +143,9 @@ class Thread(Task):
             self._thread.join()
             FemSignal.notify(self.signalStoping)
             FemSignal.notify(self.signalStoped)
-        threading.Thread(target=waitForStop).start()
+        thread = threading.Thread(target=waitForStop)
+        thread.daemon = True
+        thread.start()
 
 
 class TaskError(Exception):

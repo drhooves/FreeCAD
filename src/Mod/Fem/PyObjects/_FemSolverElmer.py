@@ -33,8 +33,7 @@ import FemSolve
 class _FemSolverElmer(object):
     """Proxy for FemSolverElmers Document Object."""
 
-    solverType = "FemSolverElmer"
-    Type = ""
+    Type = "FemSolverElmer"
 
     def __init__(self, obj):
         obj.Proxy = self
@@ -88,7 +87,7 @@ class _FemSolverElmer(object):
         obj.AnalysisType = FemDefsElmer.SUPPORTED
 
         # Set default values for properties.
-        obj.SolverType = self.solverType
+        obj.SolverType = self.Type
         obj.AnalysisType = FemDefsElmer.STATIC
         obj.EigenmodesCount = 10
         obj.LinMaxIterations = 500

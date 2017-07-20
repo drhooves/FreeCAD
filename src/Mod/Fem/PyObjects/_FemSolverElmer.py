@@ -38,18 +38,12 @@ class _FemSolverElmer(object):
 
     def __init__(self, obj):
         obj.Proxy = self
-        self.Object = obj
 
         # Prop_None     = 0
         # Prop_ReadOnly = 1
         # Prop_Transient= 2
         # Prop_Hidden   = 4
         # Prop_Output   = 8
-
-        obj.addProperty(
-                "App::PropertyPythonObject", "buildMachine",
-                "Base", "", 4)
-        obj.buildMachine = self._buildMachine
 
         obj.addProperty(
                 "App::PropertyPythonObject", "SupportedTypes",
@@ -104,12 +98,12 @@ class _FemSolverElmer(object):
         obj.TermoNLinMaxIterations = 20
         obj.TermoNLinConvergenceTolerance = 1e-7
 
-    def _buildMachine(self, directory):
-        machine = FemSolve.Machine(self.Object, directory)
-        machine.check = FemElmerTasks.Check(self.Object, directory)
-        machine.prepare = FemElmerTasks.Prepare(self.Object, directory)
-        machine.solve = FemElmerTasks.Solve(self.Object, directory)
-        machine.results = FemElmerTasks.Results(self.Object, directory)
+    def buildMachine(self, obj, directory):
+        machine = FemSolve.Machine(obj, directory)
+        machine.check = FemElmerTasks.Check(obj, directory)
+        machine.prepare = FemElmerTasks.Prepare(obj, directory)
+        machine.solve = FemElmerTasks.Solve(obj, directory)
+        machine.results = FemElmerTasks.Results(obj, directory)
         return machine
 
     def execute(self, obj):

@@ -53,7 +53,7 @@ def getMachine(solver, path=None):
     if path is None:
         path = getDefaultDir(solver)
     if path not in _machines:
-        _machines[path] = solver.buildMachine(path)
+        _machines[path] = solver.Proxy.buildMachine(solver, path)
     return _machines[path]
 
 

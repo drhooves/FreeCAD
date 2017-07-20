@@ -93,6 +93,8 @@ class ControlTaskPanel(QtCore.QObject):
 
         # Set initial machine. Signal updates the widget.
         self.machineChanged.connect(self.updateWidget)
+        self.form.destroyed.connect(
+            lambda: self.machineChanged.disconnect(self.updateWidget))
         self.machine = machine
 
     @property

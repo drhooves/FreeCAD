@@ -159,6 +159,7 @@ class Writer(object):
         simulation = self._getSimulation()
         constants = self._getConstants()
         solvers = self._getSolvers()
+        solvers.append(self._getOutputSolver())
         boundaryConditions = self._getBoundaryConditions()
         bodyForces = self._getBodyForces()
         initialConditions = self._getInitialConditions()
@@ -196,7 +197,6 @@ class Writer(object):
         s["Output Intervals"] = 1
         s["Timestepping Method"] = "BDF"
         s["BDF Order"] = 1
-        s["Post File"] = sifio.FileAttr("case.vtu")
         s["Use Mesh Names"] = True
         return s
 
@@ -294,6 +294,15 @@ class Writer(object):
             sections.append(self._getTermoSolver())
         sections.append(self._getElasticitySolver())
         return sections
+
+    def _getOutputSolver(self):
+        s = sifio.createSection(sifio.SOLVER)
+        s["Equation"] = "ResultOutput"
+        s["Exec Solver"] = "After simulation"
+        s["Procedure"] = sifio.FileAttr("ResultOutputSolve/ResultOutputSolver")
+        s["Output File Name"] = sifio.FileAttr("case")
+        s["Vtu Format"] = True
+        return s
 
     def _getElasticitySolver(self):
         s = sifio.createSection(sifio.SOLVER)

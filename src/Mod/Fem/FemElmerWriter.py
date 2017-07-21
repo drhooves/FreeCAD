@@ -51,6 +51,17 @@ _ELMERGRID_OFORMAT = "2"
 _SOLID_PREFIX = "Solid"
 
 
+UNITS = {
+    "L": "mm",
+    "M": "kg",
+    "T": "s",
+    "I": "A",
+    "O": "K",
+    "N": "mol",
+    "J": "cd",
+}
+
+
 CONSTS_DEF = {
     "Gravity": 9.82,
     "StefanBoltzmann": 5.67e-8,
@@ -69,6 +80,18 @@ SUPPORTED = [
         ("Fem::ConstraintInitialTemperature",),
         ("Fem::FeaturePython", "FemConstraintSelfWeight",),
 ]
+
+
+def getFromUi(value, unit, outputDim):
+    quantity = Units.Quantity("%f%s" % (value, unit))
+    return convert(quantity, outputDim)
+
+
+def convert(quantityStr, unit):
+    quantity = Units.Quantity(quantityStr)
+    for key, setting in UNITS.iteritems():
+        unit = unit.replace(key, setting)
+    return float(quantity.getValueAs(unit))
 
 
 class Writer(object):
@@ -214,7 +237,7 @@ class Writer(object):
         obj = FemMisc.getSingleMember(
                 self.analysis, "Fem::FeaturePython", "FemConstraintSelfWeight")
         matObj = FemMisc.getSingleMember(self.analysis, "App::MaterialObjectPython")
-        density = self._getInUnit(matObj.Material["Density"], "kg/mm^3")
+        density = convert(matObj.Material["Density"], "M/L^3")
         if obj is not None:
             sections.append(self._getSelfweight(obj, density))
         if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
@@ -264,15 +287,12 @@ class Writer(object):
     def _getMaterialSection(self, obj):
         m = obj.Material
         s = sifio.createSection(sifio.MATERIAL)
-        s["Density"] = self._getInUnit(
-                m["Density"], "kg/mm^3")
-        s["Youngs Modulus"] = self._getInUnit(
-                m["YoungsModulus"], "MPa")
+        s["Density"] = convert(m["Density"], "M/L^3")
+        s["Youngs Modulus"] = convert(m["YoungsModulus"], "M/(L*T^2)")
         s["Poisson ratio"] = float(m["PoissonRatio"])
-        s["Heat Conductivity"] = self._getInUnit(
-                m["ThermalConductivity"], "W/mm/K")
-        s["Heat expansion Coefficient"] = self._getInUnit(
-                m["ThermalExpansionCoefficient"], "mm/mm/K")
+        s["Heat Conductivity"] = convert(m["ThermalConductivity"], "M*L/(T^3*O)")
+        s["Heat expansion Coefficient"] = convert(
+                m["ThermalExpansionCoefficient"], "O^-1")
         if self.solver.AnalysisType == FemDefsElmer.THERMOMECH:
             tempObj = FemMisc.getSingleMember(
                     self.analysis, "Fem::ConstraintInitialTemperature")
@@ -387,7 +407,7 @@ class Writer(object):
 
     def _getBodyHeatFlux(self, obj):
         s = sifio.createSection(sifio.BODY_FORCE)
-        s["Heat Source"] = float(obj.HeatFlux)
+        s["Heat Source"] = float(obj.HeatFlux*1e6)
         return s
 
     def _createFixeds(self, obj):
@@ -419,9 +439,10 @@ class Writer(object):
         names = [self._getGroupName(x) for x in obj.References[0][1]]
         for n in names:
             s = self._getBndSection(n)
-            s["Force 1"] = float(obj.DirectionVector.x * obj.Force)
-            s["Force 2"] = float(obj.DirectionVector.y * obj.Force)
-            s["Force 3"] = float(obj.DirectionVector.z * obj.Force)
+            force = getFromUi(obj.Force, "N", "M*L*T^-2")
+            s["Force 1"] = float(obj.DirectionVector.x * force)
+            s["Force 2"] = float(obj.DirectionVector.y * force)
+            s["Force 3"] = float(obj.DirectionVector.z * force)
             s["Force 1 Normalize by Area"] = True
             s["Force 2 Normalize by Area"] = True
             s["Force 3 Normalize by Area"] = True
@@ -430,15 +451,13 @@ class Writer(object):
         names = [self._getGroupName(x) for x in obj.References[0][1]]
         for n in names:
             s = self._getBndSection(n)
-            s["Temperature"] = float(obj.Temperature)
+            temp = getFromUi(obj.Temperature, "K", "O")
+            s["Temperature"] = getFromUi(obj.Temperature, "K", "O")
 
     def _getInitialTemp(self, obj):
         s = sifio.createSection(sifio.INITIAL_CONDITION)
-        s["Temperature"] = obj.initialTemperature
+        s["Temperature"] = getFromUi(obj.initialTemperature, "K", "O")
         return s
-
-    def _getInUnit(self, value, unitStr):
-        return float(Units.Quantity(value).getValueAs(unitStr))
 
     def _getBndSection(self, name):
         if name in self._bndSections:

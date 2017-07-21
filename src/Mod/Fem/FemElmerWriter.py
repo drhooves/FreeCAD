@@ -308,6 +308,7 @@ class Writer(object):
         s = sifio.createSection(sifio.SOLVER)
         s["Equation"] = "Linear elasticity"
         s["Procedure"] = sifio.FileAttr("StressSolve/StressSolver")
+        s["Displace mesh"] = False
         s["Variable"] = "Displacement"
         s["Variable DOFs"] = 3
         s["Exec Solver"] = "Always"

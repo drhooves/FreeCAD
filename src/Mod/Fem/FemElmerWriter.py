@@ -83,7 +83,7 @@ SUPPORTED = [
 
 
 def getFromUi(value, unit, outputDim):
-    quantity = Units.Quantity("%f%s" % (value, unit))
+    quantity = Units.Quantity(str(value) + str(unit))
     return convert(quantity, outputDim)
 
 
@@ -407,7 +407,7 @@ class Writer(object):
 
     def _getBodyHeatFlux(self, obj):
         s = sifio.createSection(sifio.BODY_FORCE)
-        s["Heat Source"] = float(obj.HeatFlux*1e6)
+        s["Heat Source"] = getFromUi(obj.HeatFlux, "W/kg", "L^2*T^-3")
         return s
 
     def _createFixeds(self, obj):

@@ -63,10 +63,10 @@ UNITS = {
 
 
 CONSTS_DEF = {
-    "Gravity": 9.82,
-    "StefanBoltzmann": 5.67e-8,
-    "PermittivityOfVacuum": 8.8542e-12,
-    "BoltzmannConstant": 1.3807e-23,
+    "Gravity": "9.82 m/s^2",
+    "StefanBoltzmann": "5.67e-8 W/(m^2*K^4)",
+    "PermittivityOfVacuum": "8.8542e-12 F/m",
+    "BoltzmannConstant": "1.3807e-23 J/K",
     "UnitCharge": 1.602e-19,
 }
 
@@ -225,11 +225,14 @@ class Writer(object):
 
     def _getConstants(self):
         s = sifio.createSection(sifio.CONSTANTS)
-        s["Gravity"] = (0.0, -1.0, 0.0, CONSTS_DEF["Gravity"])
-        s["Stefan Boltzmann"] = CONSTS_DEF["StefanBoltzmann"]
-        s["Permittivity of Vacuum"] = CONSTS_DEF["PermittivityOfVacuum"]
-        s["Boltzmann Constant"] = CONSTS_DEF["BoltzmannConstant"]
-        s["Unit Charge"] = CONSTS_DEF["UnitCharge"]
+        s["Gravity"] = (0.0, -1.0, 0.0, convert(
+            CONSTS_DEF["Gravity"], "L/T^2"))
+        s["Stefan Boltzmann"] = convert(
+            CONSTS_DEF["StefanBoltzmann"], "M/(O^4*T^3)")
+        s["Permittivity of Vacuum"] = convert(
+            CONSTS_DEF["PermittivityOfVacuum"], "T^4*A^2/(L*M)")
+        s["Boltzmann Constant"] = convert(
+            CONSTS_DEF["BoltzmannConstant"], "M*L^2/(T^2*K)")
         return s
 
     def _getBodyForces(self):

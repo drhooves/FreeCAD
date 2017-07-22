@@ -105,7 +105,6 @@ SET(FemScripts_SRCS
     FemSettings.py
     FemSolve.py
     FemSolverTasks.py
-    FemTempfile.py
     FemSignal.py
     FemTask.py
     TestFem.py

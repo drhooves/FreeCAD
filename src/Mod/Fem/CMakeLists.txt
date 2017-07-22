@@ -53,7 +53,6 @@ INSTALL(
 	FemSettings.py
 	FemSolve.py
 	FemSolverTasks.py
-	FemTempfile.py
 	FemSignal.py
 	FemTask.py
         TestFem.py

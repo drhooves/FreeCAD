@@ -23,6 +23,7 @@
 import os
 import os.path
 import tempfile
+import shutil
 
 import FreeCAD as App
 import FemSolverTasks
@@ -92,7 +93,7 @@ def _createMachine(solver, path):
 
 
 def _getTempDir(solver):
-    return tempfile.mkdtemp()
+    return tempfile.mkdtemp(prefix="fem")
 
 
 def _getBesideDir(solver):
@@ -225,29 +226,45 @@ class _DocObserver(object):
             App.addDocumentObserver(cls._instance)
 
     def slotNewObject(self, obj):
-        self._docChanged(obj)
+        self._checkModel(obj)
 
-    def slotDeleteObject(self, obj):
-        self._docChanged(obj)
+    def slotDeletedObject(self, obj):
+        self._checkModel(obj)
+        if obj in _machines:
+            self._deleteMachine(obj)
 
     def slotChangedObject(self, obj, prop):
         if prop not in self._BLACKLIST_PROPS:
-            analysis = FemMisc.findAnalysisOfMember(obj)
-            for m in _machines.itervalues():
-                if analysis == m.analysis and obj == m.solver:
-                    m.reset()
-        self._docChanged(obj, prop)
+            self._checkSolver(obj)
+            self._checkModel(obj)
 
-    def _docChanged(self, obj, prop=None):
-        if self._partOfModel(obj, prop):
+    def slotDeletedDocument(self, doc):
+        for obj in doc.Objects:
+            if obj in _machines:
+                self._deleteMachine(obj)
+
+    def _deleteMachine(self, obj):
+        m = _machines[obj]
+        t = _dirTypes[m.directory]
+        if t == FemSettings.TEMPORARY:
+            shutil.rmtree(m.directory)
+        del _dirTypes[m.directory]
+        del _machines[obj]
+
+    def _checkSolver(self, obj):
+        analysis = FemMisc.findAnalysisOfMember(obj)
+        for m in _machines.itervalues():
+            if analysis == m.analysis and obj == m.solver:
+                m.reset()
+
+    def _checkModel(self, obj):
+        if self._partOfModel(obj):
             analysis = FemMisc.findAnalysisOfMember(obj)
             for m in _machines.itervalues():
                 if analysis == m.analysis:
                     m.reset()
 
-    def _partOfModel(self, obj, prop):
-        if prop in self._BLACKLIST_PROPS:
-            return False
+    def _partOfModel(self, obj):
         for t in self._WHITELIST:
             if obj.isDerivedFrom(t):
                 return True

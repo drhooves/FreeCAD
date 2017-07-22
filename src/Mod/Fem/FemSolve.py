@@ -151,7 +151,7 @@ class Machine(FemSolverTasks.Base):
         self.results = None
         self.target = target
         self._state = CHECK
-        self._pendingState = CHECK
+        self._pendingState = None
         self._isReset = False
 
     @property
@@ -175,7 +175,10 @@ class Machine(FemSolverTasks.Base):
         self._applyPending()
 
     def reset(self, newState=CHECK):
-        if newState < self._pendingState:
+        state = (self.state
+                if self._pendingState is None
+                else self._pendingState)
+        if newState < state:
             self._isReset = True
             self._state = newState
             FemSignal.notify(self.signalState)
@@ -185,6 +188,7 @@ class Machine(FemSolverTasks.Base):
             self._state = self._pendingState
             FemSignal.notify(self.signalState)
         self._isReset = False
+        self._pendingState = None
 
     def _runTask(self, task):
         def killer():

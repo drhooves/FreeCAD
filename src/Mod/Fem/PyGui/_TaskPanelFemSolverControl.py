@@ -53,6 +53,7 @@ class ControlTaskPanel(QtCore.QObject):
     machineStarted = QtCore.Signal(object)
     machineStoped = QtCore.Signal(object)
     machineOutputChanged = QtCore.Signal(str)
+    machineLineAppended = QtCore.Signal(str)
     machineTimeChanged = QtCore.Signal(float)
     machineStateChanged = QtCore.Signal(float)
 
@@ -86,6 +87,7 @@ class ControlTaskPanel(QtCore.QObject):
         self.machineStoped.connect(self._displayReport)
         self.machineStoped.connect(self.form.updateState)
         self.machineOutputChanged.connect(self.form.setOutput)
+        self.machineLineAppended.connect(self.form.appendOutput)
         self.machineTimeChanged.connect(self.form.setTime)
         self.machineStateChanged.connect(
                 lambda: self.form.updateState(self.machine))
@@ -162,6 +164,7 @@ class ControlTaskPanel(QtCore.QObject):
     def _connectMachine(self, machine):
         self._disconnectMachine()
         machine.solve.signalOutput.add(self._outputProxy)
+        machine.solve.signalLine.add(self._lineProxy)
         machine.signalStarted.add(self._startedProxy)
         machine.signalStoped.add(self._stopedProxy)
         machine.signalState.add(self._stateProxy)
@@ -169,6 +172,7 @@ class ControlTaskPanel(QtCore.QObject):
     def _disconnectMachine(self):
         if self.machine is not None:
             self.machine.solve.signalOutput.remove(self._outputProxy)
+            self.machine.solve.signalLine.remove(self._lineProxy)
             self.machine.signalStarted.remove(self._startedProxy)
             self.machine.signalStoped.remove(self._stopedProxy)
             self.machine.signalState.remove(self._stateProxy)
@@ -182,6 +186,9 @@ class ControlTaskPanel(QtCore.QObject):
     def _outputProxy(self):
         output = self.machine.solve.output
         self.machineOutputChanged.emit(output)
+
+    def _lineProxy(self, line):
+        self.machineLineAppended.emit(line)
 
     def _timeProxy(self):
         time = self.machine.time
@@ -268,15 +275,22 @@ class ControlWidget(QtGui.QWidget):
 
     @QtCore.Slot(str)
     def setOutput(self, text):
+        print "set output"
         if text is None:
             test = ""
         self._outputEdt.setPlainText(text)
-        scrollBar = self._outputEdt.verticalScrollBar()
-        scrollBar.setValue(scrollBar.maximum())
-
+        self._outputEdt.moveCursor(QtGui.QTextCursor.End);
 
     def output(self):
         return self._outputEdt.plainText()
+
+    @QtCore.Slot(str)
+    def appendOutput(self, line):
+        self._outputEdt.moveCursor(QtGui.QTextCursor.End);
+        self._outputEdt.insertPlainText(line);
+        self._outputEdt.moveCursor(QtGui.QTextCursor.End);
+#        scrollBar = self._outputEdt.verticalScrollBar()
+#        scrollBar.setValue(scrollBar.maximum())
 
     @QtCore.Slot(float)
     def setTime(self, time):

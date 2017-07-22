@@ -84,19 +84,24 @@ class Solve(Base):
     def __init__(self, solver, directory):
         super(Solve, self).__init__(solver, directory)
         self.signalOutput = set()
-        self._output = None
+        self.signalLine = set()
+        self._output = []
 
     def start(self):
         super(Solve, self).start()
-        self._output = ""
+        self._output = []
+
+    def appendOutput(self, line):
+        self._output.append(line)
+        FemSignal.notify(self.signalLine, line)
 
     @property
     def output(self):
-        return self._output
+        return "".join(self._output)
 
     @output.setter
     def output(self, value):
-        self._output = value
+        self._output = [value]
         FemSignal.notify(self.signalOutput)
 
 

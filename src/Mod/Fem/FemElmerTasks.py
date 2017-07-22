@@ -77,10 +77,10 @@ class Solve(FemSolverTasks.Solve):
             stderr=subprocess.PIPE)
         self.signalAbort.add(self._process.terminate)
         line = self._process.stdout.readline()
-        self.output += line
+        self.appendOutput(line)
         line = self._process.stdout.readline()
         while line:
-            self.output += "\n%s" % line.rstrip()
+            self.appendOutput("\n%s" % line.rstrip())
             line = self._process.stdout.readline()
         self._updateOutput()
 

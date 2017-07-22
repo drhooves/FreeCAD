@@ -97,6 +97,7 @@ class ControlTaskPanel(QtCore.QObject):
         self.machineChanged.connect(self.updateWidget)
         self.form.destroyed.connect(
             lambda: self.machineChanged.disconnect(self.updateWidget))
+
         self.machine = machine
 
     @property
@@ -220,7 +221,7 @@ class ControlWidget(QtGui.QWidget):
         self.setWindowTitle(self.tr("Solver Control"))
         # Working directory group box
         self._directoryTxt = QtGui.QLineEdit()
-        self._directoryTxt.textChanged.connect(self.directoryChanged)
+        self._directoryTxt.editingFinished.connect(self.directoryChanged)
         directoryBtt = QtGui.QToolButton()
         directoryBtt.setText("...")
         directoryBtt.clicked.connect(self._selectDirectory)

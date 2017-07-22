@@ -275,7 +275,6 @@ class ControlWidget(QtGui.QWidget):
 
     @QtCore.Slot(str)
     def setOutput(self, text):
-        print "set output"
         if text is None:
             test = ""
         self._outputEdt.setPlainText(text)

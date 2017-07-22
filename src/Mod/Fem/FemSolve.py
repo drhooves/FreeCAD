@@ -22,11 +22,11 @@
 
 import os
 import os.path
+import tempfile
 
 import FreeCAD as App
 import FemSolverTasks
 import FemSettings
-import FemTempfile
 import FemMisc
 import FemSignal
 import FemTask
@@ -41,68 +41,108 @@ DONE = 4
 
 
 _machines = {}
-_solverDirs = {}
+_dirTypes = {}
 
 
 def getMachine(solver, path=None):
     _DocObserver.attach()
-    name = FemMisc.getUniqueName(solver)
-    task = FemTask.running.get(name)
-    if task is not None and task.running:
-        return task
-    if path is None:
-        path = getDefaultDir(solver)
-    if path not in _machines:
-        _machines[path] = solver.Proxy.buildMachine(solver, path)
-    return _machines[path]
+    m = _machines.get(solver)
+    if m is None or not _isPathValid(m, path):
+        m = _createMachine(solver, path)
+    return m
 
 
-def getDefaultDir(solver):
+def _isPathValid(m, path):
+    t = _dirTypes[m.directory]
     setting = FemSettings.getDirSetting()
+    if path is not None:
+        return t == None and m.directory == path
     if setting == FemSettings.BESIDE:
-        if solver.Document.FileName != "":
-            return _getBesideDir(solver)
+        if t == FemSettings.BESIDE:
+            base = os.path.split(m.directory.rstrip("/"))[0]
+            return base == _getBesideBase(m.solver)
+        return False
     if setting == FemSettings.TEMPORARY:
-        return _getSolverDir(solver)
+        return t == FemSettings.TEMPORARY
     if setting == FemSettings.CUSTOM:
-        path = FemSettings.getCustomDir()
-        return _getCustomDir(path, solver)
+        if t == FemSettings.CUSTOM:
+            firstBase = os.path.split(m.directory.rstrip("/"))[0]
+            customBase = os.path.split(firstBase)[0]
+            return customBase == _getCustomBase(m.solver)
+        return False
 
 
-def _getSolverDir(solver):
-    global _solverDirs
-    name = FemMisc.getUniqueName(solver)
-    if name not in _solverDirs:
-        _solverDirs[name] = FemTempfile.createDir(solver)
-    return _solverDirs[name]
+def _createMachine(solver, path):
+    global _dirTypes
+    setting = FemSettings.getDirSetting()
+    if path is not None:
+        _dirTypes[path] = None
+    elif setting == FemSettings.BESIDE:
+        path = _getBesideDir(solver)
+        _dirTypes[path] = FemSettings.BESIDE
+    elif setting == FemSettings.TEMPORARY:
+        path = _getTempDir(solver)
+        _dirTypes[path] = FemSettings.TEMPORARY
+    elif setting == FemSettings.CUSTOM:
+        path = _getCustomDir(solver)
+        _dirTypes[path] = FemSettings.CUSTOM
+    m = solver.Proxy.buildMachine(solver, path)
+    _machines[solver] = m
+    return m
+
+
+def _getTempDir(solver):
+    return tempfile.mkdtemp()
 
 
 def _getBesideDir(solver):
+    base = _getBesideBase(solver)
+    specificPath = os.path.join(base, solver.Label)
+    specificPath = _getUniquePath(specificPath)
+    if not os.path.isdir(specificPath):
+        os.makedirs(specificPath)
+    return specificPath
+
+
+def _getBesideBase(solver):
     fcstdPath = solver.Document.FileName
     if fcstdPath == "":
         raise ValueError("must save")
-    basePath = os.path.splitext(fcstdPath)[0]
-    specificPath = os.path.join(basePath, solver.Label)
+    return os.path.splitext(fcstdPath)[0]
+
+
+def _getCustomDir(solver):
+    base = _getCustomBase(solver)
+    specificPath = os.path.join(
+            base, solver.Document.Name, solver.Label)
+    specificPath = _getUniquePath(specificPath)
     if not os.path.isdir(specificPath):
         os.makedirs(specificPath)
     return specificPath
 
 
-def _getCustomDir(path, solver):
+def _getCustomBase(solver):
+    path = FemSettings.getCustomDir()
     if not os.path.isdir(path):
         raise ValueError("Invalid path")
-    specificPath = os.path.join(
-            path, solver.Document.Name, solver.Label)
-    if not os.path.isdir(specificPath):
-        os.makedirs(specificPath)
-    return specificPath
+    return path
+
+
+def _getUniquePath(path):
+    postfix = 1
+    if path in _dirTypes:
+        path += "_%03d" % postfix
+    while path in _dirTypes:
+        postfix += 1
+        path = path[:-4] + "_%03d" % postfix
+    return path
 
 
 class Machine(FemSolverTasks.Base):
 
     def __init__(self, solver, directory, target=SOLVE):
         super(Machine, self).__init__(solver, directory)
-        self.name = FemMisc.getUniqueName(self.solver)
+        self.name = self.solver
         self.signalState = set()
         self.check = None
         self.prepare = None
@@ -195,7 +235,6 @@ class _DocObserver(object):
             analysis = FemMisc.findAnalysisOfMember(obj)
             for m in _machines.itervalues():
                 if analysis == m.analysis and obj == m.solver:
-                    print "Reset because of: %s.%s" % (obj.Label, prop)
                     m.reset()
         self._docChanged(obj, prop)
 
@@ -204,7 +243,6 @@ class _DocObserver(object):
             analysis = FemMisc.findAnalysisOfMember(obj)
             for m in _machines.itervalues():
                 if analysis == m.analysis:
-                    print "Reset because of: %s" % obj.Label
                     m.reset()
 
     def _partOfModel(self, obj, prop):

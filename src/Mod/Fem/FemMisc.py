@@ -66,10 +66,3 @@ def isOfType(obj, baseType, pyType=None):
         if hasattr(obj, "Proxy") and obj.Proxy.Type == pyType:
             return True
     return False
-
-
-def getUniqueName(obj):
-    name = obj.Name
-    if hasattr(obj, "Document"):
-        name = "%s.%s" % (obj.Document.Name, name)
-    return name

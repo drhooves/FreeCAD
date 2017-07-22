@@ -65,9 +65,8 @@ UNITS = {
 CONSTS_DEF = {
     "Gravity": "9.82 m/s^2",
     "StefanBoltzmann": "5.67e-8 W/(m^2*K^4)",
-    "PermittivityOfVacuum": "8.8542e-12 F/m",
+    "PermittivityOfVacuum": "8.8542e-12 s^4*A^2/(m*kg)",
     "BoltzmannConstant": "1.3807e-23 J/K",
-    "UnitCharge": 1.602e-19,
 }
 
 
@@ -230,7 +229,7 @@ class Writer(object):
         s["Stefan Boltzmann"] = convert(
             CONSTS_DEF["StefanBoltzmann"], "M/(O^4*T^3)")
         s["Permittivity of Vacuum"] = convert(
-            CONSTS_DEF["PermittivityOfVacuum"], "T^4*A^2/(L*M)")
+            CONSTS_DEF["PermittivityOfVacuum"], "T^4*I^2/(L*M)")
         s["Boltzmann Constant"] = convert(
             CONSTS_DEF["BoltzmannConstant"], "M*L^2/(T^2*K)")
         return s

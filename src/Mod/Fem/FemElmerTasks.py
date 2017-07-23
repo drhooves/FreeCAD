@@ -82,8 +82,10 @@ class Solve(FemSolverTasks.Solve):
         while line:
             self.appendOutput("\n%s" % line.rstrip())
             line = self._process.stdout.readline()
-        self._updateOutput()
         self._process.communicate()
+        self.signalAbort.remove(self._process.terminate)
+        if not self.aborted:
+            self._updateOutput()
 
     def _updateOutput(self):
         if self.solver.ElmerOutput is None:

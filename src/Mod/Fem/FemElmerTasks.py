@@ -83,6 +83,7 @@ class Solve(FemSolverTasks.Solve):
             self.appendOutput("\n%s" % line.rstrip())
             line = self._process.stdout.readline()
         self._updateOutput()
+        self._process.communicate()
 
     def _updateOutput(self):
         if self.solver.ElmerOutput is None:

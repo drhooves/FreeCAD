@@ -23,6 +23,7 @@
 import os
 import os.path
 import tempfile
+import threading
 import shutil
 
 import FreeCAD as App
@@ -250,10 +251,16 @@ class _DocObserver(object):
     def _deleteMachine(self, obj):
         m = _machines[obj]
         t = _dirTypes[m.directory]
-        if t == FemSettings.TEMPORARY:
-            shutil.rmtree(m.directory)
-        del _dirTypes[m.directory]
-        del _machines[obj]
+        def delegate():
+            m.join()
+            if t == FemSettings.TEMPORARY:
+                shutil.rmtree(m.directory)
+            del _dirTypes[m.directory]
+            del _machines[obj]
+        m.abort()
+        thread = threading.Thread(target=delegate)
+        thread.daemon = False
+        thread.start()
 
     def _checkSolver(self, obj):
         analysis = FemMisc.findAnalysisOfMember(obj)

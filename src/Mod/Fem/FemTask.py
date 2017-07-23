@@ -136,7 +136,8 @@ class Thread(Task):
 
     def join(self):
         super(Thread, self).join()
-        self._thread.join()
+        if self._thread is not None:
+            self._thread.join()
 
     def _attachObserver(self):
         def waitForStop():

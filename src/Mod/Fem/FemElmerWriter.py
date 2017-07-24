@@ -29,10 +29,10 @@ __url__ = "http://www.freecadweb.org"
 ## \addtogroup FEM
 #  @{
 
-
-from FreeCAD import Console
+import os
 import os.path
 import subprocess
+import tempfile
 
 import Units
 import Fem
@@ -127,33 +127,24 @@ class Writer(object):
         self.analysis = analysis
         self.solver = solver
         self.directory = directory
-        self._groupNames = dict()
+        self._groups = set()
         self._bndSections = dict()
 
     def writeInputFiles(self, report):
-        self._purgeMeshGroups()
         self._writeSif()
         self._writeStartinfo()
-        self._recreateMesh()
         self._writeMesh()
-
-    def _recreateMesh(self):
-        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
-        FemGmshTools.FemGmshTools(mesh).create_mesh()
 
     def _writeStartinfo(self):
         startinfo_path = os.path.join(
                 self.directory, _STARTINFO_NAME)
-        Console.PrintLog(
-                "Write ELMERFEM_STARTINFO to {}.\n"
-                .format(startinfo_path))
         with open(startinfo_path, 'w') as f:
             f.write(_SIF_NAME)
 
     def _writeMesh(self):
-        unvPath = os.path.join(self.directory, "mesh.unv")
         mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
-        Fem.export([mesh], unvPath)
+        unvPath = os.path.join(self.directory, "mesh.unv")
+        self._exportToUnv(mesh, unvPath)
         args = [FemSettings.getBinary("ElmerGrid"),
                 _ELMERGRID_IFORMAT,
                 _ELMERGRID_OFORMAT,
@@ -162,20 +153,38 @@ class Writer(object):
                 "-out", self.directory]
         subprocess.call(args)
 
-    def _purgeMeshGroups(self):
-        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
-        for grp in mesh.MeshGroupList:
-            grp.Document.removeObject(grp.Name)
-        mesh.MeshGroupList = []
+    def _exportToUnv(self, mesh, meshPath):
+        unvGmshFd, unvGmshPath = tempfile.mkstemp(suffix=".unv")
+        brepFd, brepPath = tempfile.mkstemp(suffix=".brep")
+        geoFd, geoPath = tempfile.mkstemp(suffix=".geo")
+        os.close(brepFd)
+        os.close(geoFd)
+        os.close(unvGmshFd)
+
+        tools = FemGmshTools.FemGmshTools(mesh)
+        tools.group_elements = {g: [g] for g in self._groups}
+        tools.ele_length_map = {}
+        tools.temp_file_geometry = brepPath
+        tools.temp_file_geo = geoPath
+        tools.temp_file_mesh = unvGmshPath
+
+        tools.get_dimension()
+        tools.get_gmsh_command()
+        tools.write_part_file()
+        tools.write_geo()
+        tools.run_gmsh_with_geo()
+
+        ioMesh = Fem.FemMesh()
+        ioMesh.read(unvGmshPath)
+        ioMesh.write(meshPath)
+
+        os.remove(brepPath)
+        os.remove(geoPath)
+        os.remove(unvGmshPath)
 
     def _getGroupName(self, subName):
-        if subName in self._groupNames:
-            return self._groupNames[subName]
-        mesh = FemMisc.getSingleMember(self.analysis, "Fem::FemMeshObject")
-        obj = ObjectsFem.makeMeshGroup(mesh, name=subName)
-        obj.References += [(mesh.Part, (subName,))]
-        self._groupNames[subName] = obj.Name
-        return obj.Name
+        self._groups.add(subName)
+        return subName
 
     def _writeSif(self):
         simulation = self._getSimulation()

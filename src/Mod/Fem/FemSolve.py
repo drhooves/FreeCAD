@@ -217,6 +217,7 @@ class _DocObserver(object):
     _WHITELIST = [
         "Fem::Constraint",
         "App::MaterialObject",
+        "Fem::FemMeshObject",
     ]
     _BLACKLIST_PROPS = [
         "Label",

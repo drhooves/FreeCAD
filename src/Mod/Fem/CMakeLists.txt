@@ -51,6 +51,7 @@ INSTALL(
         Report.py
         FemReport.py
         FemReportDialog.py
+	FemMisc.py
         TestFem.py
     DESTINATION
         Mod/Fem

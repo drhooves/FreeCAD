@@ -35,7 +35,8 @@ INSTALL(
         FemGmshTools.py
         FemInputWriter.py
         FemInputWriterCcx.py
-        FemInputWriterElmer.py
+        FemElmerWriter.py
+        FemElmerTasks.py
         FemInputWriterZ88.py
         FemMesh2Mesh.py
         FemMeshTools.py
@@ -43,7 +44,6 @@ INSTALL(
         FemSelectionObserver.py
         FemTools.py
         FemToolsCcx.py
-        FemToolsElmer.py
         FemToolsZ88.py
         ObjectsFem.py
         FemDefsElmer.py

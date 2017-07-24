@@ -43,6 +43,7 @@ import FemMisc
 class Check(FemSolve.Check):
 
     def run(self):
+        self.pushStatus("Checking analysis...\n")
         if (self.checkMesh()):
             self.checkMeshType()
         self.checkMaterial()
@@ -62,6 +63,7 @@ class Check(FemSolve.Check):
 class Prepare(FemSolve.Prepare):
 
     def run(self):
+        self.pushStatus("Preparing input files...\n")
         writer = FemElmerWriter.Writer(
                 self.analysis, self.solver, self.directory)
         writer.writeInputFiles(self.report)
@@ -70,6 +72,7 @@ class Prepare(FemSolve.Prepare):
 class Solve(FemSolve.Solve):
 
     def run(self):
+        self.pushStatus("Executing solver...\n")
         binary = FemSettings.getBinary("ElmerSolver")
         self._process = subprocess.Popen(
             [binary], cwd=self.directory,

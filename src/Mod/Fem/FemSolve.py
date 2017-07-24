@@ -144,7 +144,6 @@ class Machine(FemSolverTasks.Base):
 
     def __init__(self, solver, directory, target=SOLVE):
         super(Machine, self).__init__(solver, directory)
-        self.name = self.solver
         self.signalState = set()
         self.check = None
         self.prepare = None

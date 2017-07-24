@@ -21,7 +21,6 @@
 # ***************************************************************************
 
 
-import multiprocessing
 import threading
 import time
 
@@ -29,26 +28,9 @@ import FemReport
 import FemSignal
 
 
-running = {}
-
-
-def registerRunning(task):
-    if task.name is None:
-        raise TaskError("Can't register unnamed task.")
-    if task.name in running:
-        raise TaskError("Task %s already running." % task.name)
-    running[task.name] = task
-
-
-def removeRunning(task):
-    if task.name in running:
-        del running[task.name]
-
-
 class Task(object):
 
     def __init__(self):
-        self.name = None
         self.report = None
         self.signalStarting = set()
         self.signalStarted = set()
@@ -87,8 +69,6 @@ class Task(object):
         self.stopTime = None
         self.startTime = time.time()
         self.running = True
-        if self.name is not None:
-            registerRunning(self)
         FemSignal.notify(self.signalStarting)
         FemSignal.notify(self.signalStarted)
 
@@ -116,7 +96,6 @@ class Task(object):
         def stoping():
             self.stopTime = time.time()
             self.running = False
-            removeRunning(self)
         self.signalStoping.add(stoping)
 
 

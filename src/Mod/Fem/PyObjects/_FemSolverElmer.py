@@ -98,12 +98,12 @@ class _FemSolverElmer(object):
         obj.TermoNLinConvergenceTolerance = 1e-7
 
     def buildMachine(self, obj, directory):
-        machine = FemSolve.Machine(obj, directory)
-        machine.check = FemElmerTasks.Check(obj, directory)
-        machine.prepare = FemElmerTasks.Prepare(obj, directory)
-        machine.solve = FemElmerTasks.Solve(obj, directory)
-        machine.results = FemElmerTasks.Results(obj, directory)
-        return machine
+        return FemSolve.Machine(
+            solver=obj, directory=directory,
+            check = FemElmerTasks.Check(),
+            prepare = FemElmerTasks.Prepare(),
+            solve = FemElmerTasks.Solve(),
+            results = FemElmerTasks.Results())
 
     def execute(self, obj):
         return True

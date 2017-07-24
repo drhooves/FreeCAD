@@ -52,7 +52,6 @@ INSTALL(
 	FemMisc.py
 	FemSettings.py
 	FemSolve.py
-	FemSolverTasks.py
 	FemSignal.py
 	FemTask.py
         TestFem.py

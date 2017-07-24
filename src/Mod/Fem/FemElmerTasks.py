@@ -35,12 +35,12 @@ import os.path
 
 import FreeCAD as App
 import FemElmerWriter
-import FemSolverTasks
+import FemSolve
 import FemSettings
 import FemMisc
 
 
-class Check(FemSolverTasks.Check):
+class Check(FemSolve.Check):
 
     def run(self):
         if (self.checkMesh()):
@@ -59,7 +59,7 @@ class Check(FemSolverTasks.Check):
         return True
 
 
-class Prepare(FemSolverTasks.Prepare):
+class Prepare(FemSolve.Prepare):
 
     def run(self):
         writer = FemElmerWriter.Writer(
@@ -67,7 +67,7 @@ class Prepare(FemSolverTasks.Prepare):
         writer.writeInputFiles(self.report)
 
 
-class Solve(FemSolverTasks.Solve):
+class Solve(FemSolve.Solve):
 
     def run(self):
         binary = FemSettings.getBinary("ElmerSolver")
@@ -76,35 +76,49 @@ class Solve(FemSolverTasks.Solve):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         self.signalAbort.add(self._process.terminate)
-        line = self._process.stdout.readline()
-        self.appendOutput(line)
-        line = self._process.stdout.readline()
-        while line:
-            self.appendOutput("\n%s" % line.rstrip())
-            line = self._process.stdout.readline()
+        output = self._observeSolver(self._process)
         self._process.communicate()
         self.signalAbort.remove(self._process.terminate)
         if not self.aborted:
-            self._updateOutput()
+            self._updateOutput(output)
 
-    def _updateOutput(self):
+    def _observeSolver(self, process):
+        output = ""
+        line = process.stdout.readline()
+        self.pushStatus(line)
+        output += line
+        line = process.stdout.readline()
+        while line:
+            line = "\n%s" % line.rstrip()
+            self.pushStatus(line)
+            output += line
+            line = process.stdout.readline()
+        return output
+
+    def _updateOutput(self, output):
         if self.solver.ElmerOutput is None:
-            self.solver.ElmerOutput = self.analysis.Document.addObject(
-                    "App::TextDocument", self.solver.Name + "Output")
-            self.solver.ElmerOutput.Label = self.solver.Label + "Output"
-            self.solver.ElmerOutput.ReadOnly = True
-            self.analysis.Member += [self.solver.ElmerOutput]
-        self.solver.ElmerOutput.Text = self.output
+            self._createOutput()
+        self.solver.ElmerOutput.Text = output
+
+    def _createOutput(self):
+        self.solver.ElmerOutput = self.analysis.Document.addObject(
+                "App::TextDocument", self.solver.Name + "Output")
+        self.solver.ElmerOutput.Label = self.solver.Label + "Output"
+        self.solver.ElmerOutput.ReadOnly = True
+        self.analysis.Member += [self.solver.ElmerOutput]
 
 
-class Results(FemSolverTasks.Results):
+class Results(FemSolve.Results):
 
     def run(self):
         if self.solver.ElmerResult is None:
-            self.solver.ElmerResult = self.analysis.Document.addObject(
-                    "Fem::FemPostPipeline", self.solver.Name + "Result")
-            self.solver.ElmerResult.Label = self.solver.Label + "Result"
-            self.analysis.Member += [self.solver.ElmerResult]
+            self._createResults()
         postPath = os.path.join(self.directory, "case0001.vtu")
         self.solver.ElmerResult.read(postPath)
         self.solver.ElmerResult.getLastPostObject().recompute()
+
+    def _createResults(self):
+        self.solver.ElmerResult = self.analysis.Document.addObject(
+                "Fem::FemPostPipeline", self.solver.Name + "Result")
+        self.solver.ElmerResult.Label = self.solver.Label + "Result"
+        self.analysis.Member += [self.solver.ElmerResult]

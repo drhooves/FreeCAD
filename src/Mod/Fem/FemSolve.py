@@ -27,7 +27,6 @@ import threading
 import shutil
 
 import FreeCAD as App
-import FemSolverTasks
 import FemSettings
 import FemMisc
 import FemSignal
@@ -140,16 +139,32 @@ def _getUniquePath(path):
     return path
 
 
-class Machine(FemSolverTasks.Base):
+class BaseTask(FemTask.Thread):
 
-    def __init__(self, solver, directory, target=SOLVE):
-        super(Machine, self).__init__(solver, directory)
+    def __init__(self):
+        super(BaseTask, self).__init__()
+        self.solver = None
+        self.directory = None
+
+    @property
+    def analysis(self):
+        return FemMisc.findAnalysisOfMember(self.solver)
+
+
+class Machine(BaseTask):
+
+    def __init__(
+            self, solver, directory, check,
+            prepare, solve, results):
+        super(Machine, self).__init__()
+        self.solver = solver
+        self.directory = directory
         self.signalState = set()
-        self.check = None
-        self.prepare = None
-        self.solve = None
-        self.results = None
-        self.target = target
+        self.check = check
+        self.prepare = prepare
+        self.solve = solve
+        self.results = results
+        self.target = RESULTS
         self._state = CHECK
         self._pendingState = None
         self._isReset = False
@@ -159,6 +174,7 @@ class Machine(FemSolverTasks.Base):
         return self._state
 
     def run(self):
+        self._confTasks()
         self._isReset = False
         self._pendingState = self.state
         while (not self.aborted and not self.failed
@@ -183,6 +199,17 @@ class Machine(FemSolverTasks.Base):
             self._state = newState
             FemSignal.notify(self.signalState)
 
+    def _confTasks(self):
+        tasks = [
+            self.check,
+            self.prepare,
+            self.solve,
+            self.results
+        ]
+        for t in tasks:
+            t.solver = self.solver
+            t.directory = self.directory
+
     def _applyPending(self):
         if not self._isReset:
             self._state = self._pendingState
@@ -191,12 +218,16 @@ class Machine(FemSolverTasks.Base):
         self._pendingState = None
 
     def _runTask(self, task):
+        def statusProxy(line):
+            self.pushStatus(line)
         def killer():
             task.abort()
         self.signalAbort.add(killer)
+        task.signalStatus.add(statusProxy)
         task.start()
         task.join()
         self.signalAbort.remove(killer)
+        task.signalStatus.remove(statusProxy)
 
     def _getTask(self, state):
         if state == CHECK:
@@ -208,6 +239,59 @@ class Machine(FemSolverTasks.Base):
         elif state == RESULTS:
             return self.results
         return None
+
+
+class Check(BaseTask):
+
+    def checkMesh(self):
+        meshes = FemMisc.getMember(
+            self.analysis, "Fem::FemMeshObject")
+        if len(meshes) == 0:
+            self.report.appendError("Missing a mesh object.")
+            self.fail()
+            return False
+        elif len(meshes) > 1:
+            self.report.appendError(
+                "Too many meshes. "
+                "More than one mesh is not supported.")
+            self.fail()
+            return False
+        return True
+
+    def checkMaterial(self):
+        matObjs = FemMisc.getMember(
+            self.analysis, "App::MaterialObjectPython")
+        if len(matObjs) == 0:
+            self.report.appendError(
+                "No material object found. "
+                "At least one material is required.")
+            self.fail()
+            return False
+        return True
+
+    def checkSupported(self, allSupported):
+        for m in self.analysis.Member:
+            if FemMisc.isOfType(m, "Fem::Constraint"):
+                supported = False
+                for sc in allSupported:
+                    if FemMisc.isOfType(m, *sc):
+                        supported = True
+                if not supported:
+                    self.report.appendWarning(
+                        "Ignored unsupported constraint: %s" % m.Label)
+        return True
+
+
+class Solve(BaseTask):
+    pass
+
+
+class Prepare(BaseTask):
+    pass
+
+
+class Results(BaseTask):
+    pass
 
 
 class _DocObserver(object):

@@ -37,12 +37,17 @@ class Task(object):
         self.signalStoping = set()
         self.signalStoped = set()
         self.signalAbort = set()
+        self.signalStatus = set()
         self.startTime = None
         self.stopTime = None
         self.running = False
         self._aborted = False
         self._failed = False
-        self._connectSelf()
+        self._status = []
+        def stoping():
+            self.stopTime = time.time()
+            self.running = False
+        self.signalStoping.add(stoping)
 
     @property
     def time(self):
@@ -62,8 +67,13 @@ class Task(object):
     def aborted(self):
         return self._aborted
 
+    @property
+    def status(self):
+        return "".join(self._status)
+
     def start(self):
         self.report = FemReport.Report()
+        self._status = []
         self._aborted = False
         self._failed = False
         self.stopTime = None
@@ -76,7 +86,7 @@ class Task(object):
         raise NotImplementedError()
 
     def join(self):
-        pass
+        raise NotImplementedError()
 
     def abort(self):
         self._aborted = True
@@ -85,18 +95,16 @@ class Task(object):
     def fail(self):
         self._failed = True
 
-    def _protector(self):
+    def pushStatus(self, line):
+        self._status.append(line)
+        FemSignal.notify(self.signalStatus, line)
+
+    def protector(self):
         try:
             self.run()
         except:
             self.fail()
             raise
-
-    def _connectSelf(self):
-        def stoping():
-            self.stopTime = time.time()
-            self.running = False
-        self.signalStoping.add(stoping)
 
 
 class Thread(Task):
@@ -108,13 +116,12 @@ class Thread(Task):
     def start(self):
         super(Thread, self).start()
         self._thread = threading.Thread(
-            target=self._protector)
+            target=self.protector)
         self._thread.daemon = True
         self._thread.start()
         self._attachObserver()
 
     def join(self):
-        super(Thread, self).join()
         if self._thread is not None:
             self._thread.join()
 
@@ -126,7 +133,3 @@ class Thread(Task):
         thread = threading.Thread(target=waitForStop)
         thread.daemon = True
         thread.start()
-
-
-class TaskError(Exception):
-    pass

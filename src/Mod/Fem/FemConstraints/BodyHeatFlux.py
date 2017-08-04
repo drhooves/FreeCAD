@@ -21,55 +21,26 @@
 # ***************************************************************************
 
 
-__title__ = "FemMisc"
-__author__ = "Markus Hovorka"
+__title__ = "Elmer Solver Object"
+__author__ = "Markus Hovorka, Bernd Hahnebach"
 __url__ = "http://www.freecadweb.org"
 
 
-import FreeCAD as App
+import FemMisc
+import ConstraintBase
 
 
-def createObject(doc, name, proxy, viewProxy):
-    obj = doc.addObject(proxy.BaseType, name)
-    proxy(obj)
-    if App.GuiUp:
-        viewProxy(obj.ViewObject)
-    return obj
+
+class Proxy(ConstraintBase.Proxy):
+
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.addProperty(
+                "App::PropertyFloat", "HeatFlux",
+                "Base", "Body heat flux")
 
 
-def findAnalysisOfMember(member):
-    if member is None:
-        raise ValueError("Member must not be None")
-    for obj in member.Document.Objects:
-        if obj.isDerivedFrom("Fem::FemAnalysis"):
-            if member in obj.Member:
-                return obj
-    return None
+class ViewProxy(ConstraintBase.ViewProxy):
 
-
-def getMember(analysis, t):
-    if analysis is None:
-        raise ValueError("Analysis must not be None")
-    matching = []
-    for m in analysis.Member:
-        if isDerivedFrom(m, t):
-            matching.append(m)
-    return matching
-
-
-def getSingleMember(analysis, t):
-    objs = getMember(analysis, t)
-    return objs[0] if objs else None
-
-
-def isOfType(obj, t):
-    if hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type"):
-        return obj.Proxy.Type == t
-    return obj.TypeId == t
-
-
-def isDerivedFrom(obj, t):
-    if (hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type")
-            and obj.Proxy.Type == t):
-        return True
-    return obj.isDerivedFrom(t)
+    def getIcon(self):
+        return ":/icons/fem-constraint-heatflux.svg"

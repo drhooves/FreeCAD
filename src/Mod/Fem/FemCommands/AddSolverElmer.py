@@ -21,27 +21,41 @@
 # ***************************************************************************
 
 
-__title__ = "Elmer Solver Object"
-__author__ = "Markus Hovorka, Bernd Hahnebach"
+__title__ = "Elmer"
+__author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
-class DocumentProxy(object):
+from PySide import QtCore
 
-    Type = "FemConstraintBodyHeatFlux"
+import FreeCAD as App
+import FreeCADGui as Gui
+import FemGui
 
-    def __init__(self, obj):
-        obj.Proxy = self
 
-        # Prop_None     = 0
-        # Prop_ReadOnly = 1
-        # Prop_Transient= 2
-        # Prop_Hidden   = 4
-        # Prop_Output   = 8
+class Command(QtCore.QObject):
 
-        obj.addProperty(
-                "App::PropertyFloat", "HeatFlux",
-                "Base", "Body heat flux")
+    def Activated(self):
+        analysis = FemGui.getActiveAnalysis()
+        App.ActiveDocument.openTransaction("Create Elmer Solver-Object")
+        Gui.addModule("FemElmer.SolverObject")
+        Gui.doCommand(
+                "App.ActiveDocument.%s.Member += "
+                "[FemElmer.SolverObject.create(App.ActiveDocument)]"
+                % analysis.Name)
+        App.ActiveDocument.commitTransaction()
+        App.ActiveDocument.recompute()
 
-    def execute(self, obj):
-        return True
+    def GetResources(self):
+        return {
+            'Pixmap': 'fem-elmer',
+            'MenuText': "Solver Elmer",
+            'Accel': "S, E",
+            'ToolTip': "Creates a FEM solver Elmer"
+        }
+
+    def IsActive(self):
+        return FemGui.getActiveAnalysis() is not None
+
+
+Gui.addCommand('FEM_AddSolverElmer', Command())

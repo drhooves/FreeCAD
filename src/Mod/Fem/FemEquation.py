@@ -21,55 +21,64 @@
 # ***************************************************************************
 
 
-__title__ = "FemMisc"
+__title__ = "_Base"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
-import FreeCAD as App
+from pivy import coin
 
 
-def createObject(doc, name, proxy, viewProxy):
-    obj = doc.addObject(proxy.BaseType, name)
-    proxy(obj)
-    if App.GuiUp:
-        viewProxy(obj.ViewObject)
-    return obj
+class BaseProxy(object):
 
+    BaseType = "App::FeaturePython"
 
-def findAnalysisOfMember(member):
-    if member is None:
-        raise ValueError("Member must not be None")
-    for obj in member.Document.Objects:
-        if obj.isDerivedFrom("Fem::FemAnalysis"):
-            if member in obj.Member:
-                return obj
-    return None
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addProperty(
+                "App::PropertyLinkSubList", "References",
+                "Base", "")
 
-
-def getMember(analysis, t):
-    if analysis is None:
-        raise ValueError("Analysis must not be None")
-    matching = []
-    for m in analysis.Member:
-        if isDerivedFrom(m, t):
-            matching.append(m)
-    return matching
-
-
-def getSingleMember(analysis, t):
-    objs = getMember(analysis, t)
-    return objs[0] if objs else None
-
-
-def isOfType(obj, t):
-    if hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type"):
-        return obj.Proxy.Type == t
-    return obj.TypeId == t
-
-
-def isDerivedFrom(obj, t):
-    if (hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type")
-            and obj.Proxy.Type == t):
+    def execute(self, obj):
         return True
-    return obj.isDerivedFrom(t)
+
+
+class BaseViewProxy(object):
+
+    def __init__(self, vobj):
+        vobj.Proxy = self
+
+    def attach(self, vobj):
+        default = coin.SoGroup()
+        vobj.addDisplayMode(default, "Default")
+
+    def getDisplayModes(self, obj):
+        "Return a list of display modes."
+        modes = ["Default"]
+        return modes
+
+    def getDefaultDisplayMode(self):
+        return "Default"
+
+    def setDisplayMode(self, mode):
+        return mode
+
+
+class HeatProxy(BaseProxy):
+    pass
+
+
+class HeatViewProxy(BaseViewProxy):
+
+    def getIcon(self):
+        return ":/icons/fem-equation-heat.svg"
+
+
+class ElasticityProxy(BaseProxy):
+    pass
+
+
+class ElasticityViewProxy(BaseViewProxy):
+
+    def getIcon(self):
+        return ":/icons/fem-equation-elasticity.svg"

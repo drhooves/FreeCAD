@@ -21,40 +21,71 @@
 # ***************************************************************************
 
 
-__title__ = "_CommandFemConstraintBodyHeatFlux"
+__title__ = "Elmer"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
-from PySide import QtCore
-
 import FreeCAD as App
-import FreeCADGui as Gui
-import FemCommands
+import FemSolverObject
+import FemMisc
+import FemRun
+
+import Tasks
+import Equations.Heat
+import Equations.Elasticity
 
 
-class _CommandFemConstraintBodyHeatFlux(FemCommands.FemCommands):
-    def __init__(self):
-        super(_CommandFemConstraintBodyHeatFlux, self).__init__()
-        self.resources = {
-            'Pixmap': 'fem-constraint-heatflux',
-            'MenuText': QtCore.QT_TRANSLATE_NOOP(
-                "FEM_ConstraintBodyHeatFlux",
-                "Constraint body heat flux"),
-            'ToolTip': QtCore.QT_TRANSLATE_NOOP(
-                "FEM_ConstraintBodyHeatFlux",
-                "Creates a FEM constraint body heat flux")}
-        self.is_active = 'with_analysis'
-
-    def Activated(self):
-        App.ActiveDocument.openTransaction(
-            "Create FemConstraintBodyHeatFlux")
-        Gui.addModule("ObjectsFem")
-        Gui.doCommand(
-            "FemGui.getActiveAnalysis().Member += "
-            "[ObjectsFem.makeConstraintBodyHeatFlux()]")
+def create(doc, name="ElmerSolver"):
+    return FemMisc.createObject(
+        doc, name, Proxy, ViewProxy)
 
 
-Gui.addCommand(
-    'FEM_ConstraintBodyHeatFlux',
-    _CommandFemConstraintBodyHeatFlux())
+class Proxy(FemSolverObject.Proxy):
+    """Proxy for FemSolverElmers Document Object."""
+
+    Type = "Fem::FemSolverObjectElmer"
+
+    _EQUATIONS = {
+        "Heat": Equations.Heat,
+        "Elasticity": Equations.Elasticity,
+    }
+
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.addProperty(
+                "App::PropertyInteger", "SteadyStateMaxIterations",
+                "Steady State", "")
+        obj.addProperty(
+                "App::PropertyInteger", "SteadyStateMinIterations",
+                "Steady State", "")
+        obj.addProperty(
+                "App::PropertyLink", "ElmerResult",
+                "Base", "", 4 | 8)
+        obj.addProperty(
+                "App::PropertyLink", "ElmerOutput",
+                "Base", "", 4 | 8)
+
+        obj.SteadyStateMaxIterations = 1
+        obj.SteadyStateMinIterations = 0
+
+    def createMachine(self, obj, directory):
+        return FemRun.Machine(
+            solver=obj, directory=directory,
+            check=Tasks.Check(),
+            prepare=Tasks.Prepare(),
+            solve=Tasks.Solve(),
+            results=Tasks.Results())
+
+    def createEquation(self, doc, eqId):
+        return self._EQUATIONS[eqId].create(doc)
+
+    def isSupported(self, eqId):
+        return eqId in self._EQUATIONS
+
+
+class ViewProxy(FemSolverObject.ViewProxy):
+    """Proxy for FemSolverElmers View Provider."""
+
+    def getIcon(self):
+        return ":/icons/fem-elmer.png"

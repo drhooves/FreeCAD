@@ -21,39 +21,68 @@
 # ***************************************************************************
 
 
-__title__ = "_ViewProviderFemSolverElmer"
+__title__ = "_CommandFemConstraintBodyHeatFlux"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
+from PySide import QtCore
+
+import FreeCAD as App
 import FreeCADGui as Gui
-import PyGui._TaskPanelFemSolverControl
-import FemSolve
+import FemMisc
 
 
-class _ViewProviderFemSolverElmer(object):
-    """Proxy for FemSolverElmers View Provider."""
+class _Base(QtCore.QObject):
 
-    def __init__(self, vobj):
-        vobj.Proxy = self
+    def getSpecifier(self):
+        raise NotImplementedError()
 
-    def getIcon(self):
-        return ":/icons/fem-elmer.png"
+    def Activated(self):
+        s = Gui.Selection.getSelection()
+        if len(s) == 1 and FemMisc.isDerivedFrom(s[0], "Fem::FemSolverObject"):
+            App.ActiveDocument.openTransaction(
+                "Add %s equation to %s"
+                % (self.getSpecifier(), s[0].Label))
+            Gui.doCommand(
+                "App.ActiveDocument.%(obj)s.Proxy.addEquation("
+                "App.ActiveDocument.%(obj)s, '%(name)s')"
+                % {"obj": s[0].Name, "name": self.getSpecifier()})
+            App.ActiveDocument.commitTransaction()
+            App.ActiveDocument.recompute()
 
-    def setEdit(self, vobj, mode=0):
-        machine = FemSolve.getMachine(vobj.Object)
-        task = PyGui._TaskPanelFemSolverControl.ControlTaskPanel(machine)
-        Gui.Control.showDialog(task)
-        return True
+    def IsActive(self):
+        s = Gui.Selection.getSelection()
+        if len(s) == 1 and FemMisc.isDerivedFrom(s[0], "Fem::FemSolverObject"):
+            return s[0].Proxy.isSupported(self.getSpecifier())
+        return False
 
-    def unsetEdit(self, vobj, mode=0):
-        Gui.Control.closeDialog()
 
-    def doubleClicked(self, vobj):
-        if Gui.Control.activeDialog():
-            Gui.Control.closeDialog()
-        Gui.ActiveDocument.setEdit(vobj.Object.Name)
-        return True
+class Heat(_Base):
 
-    def attach(self, vobj):
-        pass
+    def getSpecifier(self):
+        return "Heat"
+
+    def GetResources(self):
+        return {
+            'Pixmap': 'fem-equation-heat',
+            'MenuText': "Heat Equation",
+            'ToolTip': "Creates a FEM constraint body heat flux"
+        }
+
+
+class Elasticity(_Base):
+
+    def getSpecifier(self):
+        return "Elasticity"
+
+    def GetResources(self):
+        return {
+            'Pixmap': 'fem-equation-elasticity',
+            'MenuText': "Elasticity Equation",
+            'ToolTip': "Creates a FEM constraint body heat flux"
+        }
+
+
+Gui.addCommand('FEM_AddEquationHeat', Heat())
+Gui.addCommand('FEM_AddEquationElasticity', Elasticity())

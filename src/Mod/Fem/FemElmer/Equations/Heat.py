@@ -21,34 +21,29 @@
 # ***************************************************************************
 
 
-__title__ = "_ViewProviderFemConstraintBodyHeatFlux"
+__title__ = "Heat"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
-from pivy import coin
+import FemMisc
+import Nonlinear
+import FemEquation
 
 
-class ViewProxy(object):
-    """Proxy for FemSolverElmers View Provider."""
+def create(doc, name="Heat"):
+    return FemMisc.createObject(
+        doc, name, Proxy, ViewProxy)
 
-    def __init__(self, vobj):
-        vobj.Proxy = self
 
-    def getIcon(self):
-        return ":/icons/fem-constraint-heatflux.svg"
+class Proxy(Nonlinear.Proxy, FemEquation.HeatProxy):
 
-    def attach(self, vobj):
-        default = coin.SoGroup()
-        vobj.addDisplayMode(default, "Default")
+    Type = "Fem::FemEquationElmerHeat"
 
-    def getDisplayModes(self, obj):
-        "Return a list of display modes."
-        modes = ["Default"]
-        return modes
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
+        obj.Priority = 20
 
-    def getDefaultDisplayMode(self):
-        return "Default"
 
-    def setDisplayMode(self, mode):
-        return mode
+class ViewProxy(Nonlinear.ViewProxy, FemEquation.HeatViewProxy):
+    pass

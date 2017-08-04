@@ -1,6 +1,6 @@
 # ***************************************************************************
 # *                                                                         *
-# *   Copyright (c) 2016 - Markus Hovorka <m.hovorka@live.de>               *
+# *   Copyright (c) 2017 - Markus Hovorka <m.hovorka@live.de>               *
 # *                                                                         *
 # *   This program is free software; you can redistribute it and/or modify  *
 # *   it under the terms of the GNU Lesser General Public License (LGPL)    *
@@ -20,46 +20,45 @@
 # *                                                                         *
 # ***************************************************************************
 
-__title__ = "_CommandSolverElmer"
-__author__ = "Markus Hovorka, Bernd Hahnebach"
+
+__title__ = "_Base"
+__author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
-## @package CommandFemSolverElmer
-#  \ingroup FEM
 
-from PySide import QtCore
+from pivy import coin
 
 import FreeCAD as App
-import FreeCADGui as Gui
-import FemGui
-from FemCommands import FemCommands
+if App.GuiUp:
+    import FreeCADGui as Gui
+import FemProxy
 
 
-class _CommandFemSolverElmer(FemCommands):
-    """The Fem_SolverElmer command definition."""
+class Proxy(object):
 
-    def __init__(self):
-        super(_CommandFemSolverElmer, self).__init__()
-        self.resources = {
-                'Pixmap': 'fem-elmer',
-                'MenuText': QtCore.QT_TRANSLATE_NOOP(
-                    "Fem_SolverElmer", "Solver Elmer"),
-                'Accel': "S, E",
-                'ToolTip': QtCore.QT_TRANSLATE_NOOP(
-                    "Fem_SolverElmer", "Creates a FEM solver Elmer")
-        }
-        self.is_active = 'with_analysis'
+    BaseType = "App::ConstraintPython"
 
-    def Activated(self):
-        analysis = FemGui.getActiveAnalysis()
-        App.ActiveDocument.openTransaction("Create SolverElmer")
-        Gui.addModule("ObjectsFem")
-        Gui.doCommand(
-                "App.ActiveDocument.{}.Member +="
-                "[ObjectsFem.makeSolverElmer()]"
-                .format(analysis.Name))
-        App.ActiveDocument.commitTransaction()
-        App.ActiveDocument.recompute()
+    def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
 
 
-Gui.addCommand('FEM_SolverElmer', _CommandFemSolverElmer())
+class ViewProxy(object):
+    """Proxy for FemSolverElmers View Provider."""
+
+    def __init__(self, vobj):
+        vobj.Proxy = self
+
+    def attach(self, vobj):
+        default = coin.SoGroup()
+        vobj.addDisplayMode(default, "Default")
+
+    def getDisplayModes(self, obj):
+        "Return a list of display modes."
+        modes = ["Default"]
+        return modes
+
+    def getDefaultDisplayMode(self):
+        return "Default"
+
+    def setDisplayMode(self, mode):
+        return mode

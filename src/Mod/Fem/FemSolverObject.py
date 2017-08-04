@@ -21,55 +21,65 @@
 # ***************************************************************************
 
 
-__title__ = "FemMisc"
+__title__ = "Elmer Solver Object"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
 import FreeCAD as App
+if App.GuiUp:
+    import FreeCADGui as Gui
+    import PyGui._TaskPanelFemSolverControl
+
+import FemRun
 
 
-def createObject(doc, name, proxy, viewProxy):
-    obj = doc.addObject(proxy.BaseType, name)
-    proxy(obj)
-    if App.GuiUp:
-        viewProxy(obj.ViewObject)
-    return obj
+class Proxy(object):
 
+    BaseType = "Fem::FemSolverObjectPython"
 
-def findAnalysisOfMember(member):
-    if member is None:
-        raise ValueError("Member must not be None")
-    for obj in member.Document.Objects:
-        if obj.isDerivedFrom("Fem::FemAnalysis"):
-            if member in obj.Member:
-                return obj
-    return None
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addExtension("App::GroupExtensionPython", self)
 
+    def createMachine(self, obj, directory):
+        raise NotImplementedError()
 
-def getMember(analysis, t):
-    if analysis is None:
-        raise ValueError("Analysis must not be None")
-    matching = []
-    for m in analysis.Member:
-        if isDerivedFrom(m, t):
-            matching.append(m)
-    return matching
+    def createEquation(self, obj, eqId):
+        raise NotImplementedError()
 
+    def isSupported(self, equation):
+        raise NotImplementedError()
 
-def getSingleMember(analysis, t):
-    objs = getMember(analysis, t)
-    return objs[0] if objs else None
+    def addEquation(self, obj, eqId):
+        obj.addObject(self.createEquation(
+            obj.Document, eqId))
 
-
-def isOfType(obj, t):
-    if hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type"):
-        return obj.Proxy.Type == t
-    return obj.TypeId == t
-
-
-def isDerivedFrom(obj, t):
-    if (hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type")
-            and obj.Proxy.Type == t):
+    def execute(self, obj):
         return True
-    return obj.isDerivedFrom(t)
+
+
+class ViewProxy(object):
+    """Proxy for FemSolverElmers View Provider."""
+
+    def __init__(self, vobj):
+        vobj.Proxy = self
+        vobj.addExtension("Gui::ViewProviderGroupExtensionPython", self)
+
+    def setEdit(self, vobj, mode=0):
+        machine = FemRun.getMachine(vobj.Object)
+        task = PyGui._TaskPanelFemSolverControl.ControlTaskPanel(machine)
+        Gui.Control.showDialog(task)
+        return True
+
+    def unsetEdit(self, vobj, mode=0):
+        Gui.Control.closeDialog()
+
+    def doubleClicked(self, vobj):
+        if Gui.Control.activeDialog():
+            Gui.Control.closeDialog()
+        Gui.ActiveDocument.setEdit(vobj.Object.Name)
+        return True
+
+    def attach(self, vobj):
+        pass

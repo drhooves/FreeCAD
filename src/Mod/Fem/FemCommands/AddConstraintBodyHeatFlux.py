@@ -21,55 +21,39 @@
 # ***************************************************************************
 
 
-__title__ = "FemMisc"
+__title__ = "AddConstraintBodyHeatFlux"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
+from PySide import QtCore
+
 import FreeCAD as App
+import FreeCADGui as Gui
+from PyGui import FemCommands
 
 
-def createObject(doc, name, proxy, viewProxy):
-    obj = doc.addObject(proxy.BaseType, name)
-    proxy(obj)
-    if App.GuiUp:
-        viewProxy(obj.ViewObject)
-    return obj
+class Command(FemCommands.FemCommands):
+
+    def __init__(self):
+        super(Command, self).__init__()
+        self.resources = {
+            'Pixmap': 'fem-constraint-heatflux',
+            'MenuText': QtCore.QT_TRANSLATE_NOOP(
+                "FEM_ConstraintBodyHeatFlux",
+                "Constraint body heat flux"),
+            'ToolTip': QtCore.QT_TRANSLATE_NOOP(
+                "FEM_ConstraintBodyHeatFlux",
+                "Creates a FEM constraint body heat flux")}
+        self.is_active = 'with_analysis'
+
+    def Activated(self):
+        App.ActiveDocument.openTransaction(
+            "Create FemConstraintBodyHeatFlux")
+        Gui.addModule("ObjectsFem")
+        Gui.doCommand(
+            "FemGui.getActiveAnalysis().Member += "
+            "[ObjectsFem.makeConstraintBodyHeatFlux()]")
 
 
-def findAnalysisOfMember(member):
-    if member is None:
-        raise ValueError("Member must not be None")
-    for obj in member.Document.Objects:
-        if obj.isDerivedFrom("Fem::FemAnalysis"):
-            if member in obj.Member:
-                return obj
-    return None
-
-
-def getMember(analysis, t):
-    if analysis is None:
-        raise ValueError("Analysis must not be None")
-    matching = []
-    for m in analysis.Member:
-        if isDerivedFrom(m, t):
-            matching.append(m)
-    return matching
-
-
-def getSingleMember(analysis, t):
-    objs = getMember(analysis, t)
-    return objs[0] if objs else None
-
-
-def isOfType(obj, t):
-    if hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type"):
-        return obj.Proxy.Type == t
-    return obj.TypeId == t
-
-
-def isDerivedFrom(obj, t):
-    if (hasattr(obj, "Proxy") and hasattr(obj.Proxy, "Type")
-            and obj.Proxy.Type == t):
-        return True
-    return obj.isDerivedFrom(t)
+Gui.addCommand('FEM_AddConstraintBodyHeatFlux', Command())

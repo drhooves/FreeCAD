@@ -35,8 +35,6 @@ INSTALL(
         FemGmshTools.py
         FemInputWriter.py
         FemInputWriterCcx.py
-        FemElmerWriter.py
-        FemElmerTasks.py
         FemInputWriterZ88.py
         FemMesh2Mesh.py
         FemMeshTools.py
@@ -46,13 +44,14 @@ INSTALL(
         FemToolsZ88.py
         ObjectsFem.py
         FemDefsElmer.py
-        sifio.py
         FemReport.py
         FemReportDialog.py
         FemMisc.py
         FemSettings.py
         FemTask.py
-        FemSolve.py
+        FemSolverObject.py
+        FemEquation.py
+	FemRun.py
         FemSignal.py
         TestFem.py
     DESTINATION
@@ -63,7 +62,6 @@ INSTALL(
     FILES
         PyObjects/__init__.py
         PyObjects/_FemConstraintSelfWeight.py
-        PyObjects/_FemConstraintBodyHeatFlux.py
         PyObjects/_FemElementFluid1D.py
         PyObjects/_FemElementGeometry1D.py
         PyObjects/_FemElementGeometry2D.py
@@ -75,7 +73,6 @@ INSTALL(
         PyObjects/_FemMeshResult.py
         PyObjects/_FemResultMechanical.py
         PyObjects/_FemSolverCalculix.py
-        PyObjects/_FemSolverElmer.py
         PyObjects/_FemSolverZ88.py
         PyObjects/_FemMaterial.py
     DESTINATION
@@ -84,11 +81,53 @@ INSTALL(
 
 INSTALL(
     FILES
+        FemElmer/__init__.py
+        FemElmer/sifio.py
+        FemElmer/SolverObject.py
+        FemElmer/Tasks.py
+        FemElmer/Writer.py
+        FemElmer/sifio.py
+    DESTINATION
+        Mod/Fem/FemElmer
+)
+
+INSTALL(
+    FILES
+        FemElmer/Equations/__init__.py
+        FemElmer/Equations/Base.py
+        FemElmer/Equations/Linear.py
+        FemElmer/Equations/Nonlinear.py
+        FemElmer/Equations/Elasticity.py
+        FemElmer/Equations/Heat.py
+    DESTINATION
+        Mod/Fem/FemElmer/Equations
+)
+
+INSTALL(
+    FILES
+        FemConstraints/__init__.py
+        FemConstraints/ConstraintBase.py
+        FemConstraints/BodyHeatFlux.py
+    DESTINATION
+        Mod/Fem/FemConstraints
+)
+
+INSTALL(
+    FILES
+        FemCommands/__init__.py
+        FemCommands/AddSolverElmer.py
+        FemCommands/AddEquation.py
+        FemCommands/AddConstraintBodyHeatFlux.py
+    DESTINATION
+        Mod/Fem/FemConstraints
+)
+
+INSTALL(
+    FILES
         PyGui/FemCommands.py
         PyGui/__init__.py
         PyGui/_CommandFemAnalysis.py
         PyGui/_CommandFemConstraintSelfWeight.py
-        PyGui/_CommandFemConstraintBodyHeatFlux.py
         PyGui/_CommandFemElementFluid1D.py
         PyGui/_CommandFemElementGeometry1D.py
         PyGui/_CommandFemElementGeometry2D.py
@@ -107,7 +146,6 @@ INSTALL(
         PyGui/_CommandFemResultsPurge.py
         PyGui/_CommandFemSolverCalculix.py
         PyGui/_CommandFemSolverControl.py
-        PyGui/_CommandFemSolverElmer.py
         PyGui/_CommandFemSolverRun.py
         PyGui/_CommandFemSolverZ88.py
         PyGui/_TaskPanelFemElementFluid1D.py
@@ -122,7 +160,6 @@ INSTALL(
         PyGui/_TaskPanelFemSolverCalculix.py
         PyGui/_TaskPanelFemSolverControl.py
         PyGui/_ViewProviderFemConstraintSelfWeight.py
-        PyGui/_ViewProviderFemConstraintBodyHeatFlux.py
         PyGui/_ViewProviderFemElementFluid1D.py
         PyGui/_ViewProviderFemElementGeometry1D.py
         PyGui/_ViewProviderFemElementGeometry2D.py
@@ -135,7 +172,6 @@ INSTALL(
         PyGui/_ViewProviderFemMeshResult.py
         PyGui/_ViewProviderFemResultMechanical.py
         PyGui/_ViewProviderFemSolverCalculix.py
-        PyGui/_ViewProviderFemSolverElmer.py
         PyGui/_ViewProviderFemSolverZ88.py
         PyGui/TaskPanelFemElementFluid1D.ui
         PyGui/TaskPanelFemElementGeometry1D.ui

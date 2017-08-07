@@ -96,7 +96,6 @@ SET(FemScripts_SRCS
     FemToolsCcx.py
     FemToolsZ88.py
     ObjectsFem.py
-    FemDefsElmer.py
     FemReport.py
     FemReportDialog.py
     FemMisc.py

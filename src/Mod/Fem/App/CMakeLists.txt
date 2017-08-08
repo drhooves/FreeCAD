@@ -143,6 +143,7 @@ SET(FemEquationsElmer_SRCS
     FemElmer/Equations/Nonlinear.py
     FemElmer/Equations/Elasticity.py
     FemElmer/Equations/Heat.py
+    FemElmer/Equations/Flow.py
 )
 
 SET(FemConstraintsPy_SRCS

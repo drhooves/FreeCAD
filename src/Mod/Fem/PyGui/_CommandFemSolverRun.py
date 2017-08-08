@@ -31,7 +31,8 @@ from .FemCommands import FemCommands
 import FreeCAD
 import FreeCADGui
 from PySide import QtCore, QtGui
-import FemSolve
+import FemRun
+import FemMisc
 
 
 class _CommandFemSolverRun(FemCommands):
@@ -54,7 +55,9 @@ class _CommandFemSolverRun(FemCommands):
         sel = FreeCADGui.Selection.getSelection()
         if len(sel) == 1 and sel[0].isDerivedFrom("Fem::FemSolverObjectPython"):
             self.solver = sel[0]
-        if self.solver.SolverType == "FemSolverCalculix":
+        if FemMisc.isDerivedFrom(self.solver, "Fem::FemSolverObjectElmer"):
+            self._newActivated()
+        elif self.solver.SolverType == "FemSolverCalculix":
             import FemToolsCcx
             self.fea = FemToolsCcx.FemToolsCcx(None, self.solver)
             self.fea.reset_mesh_purge_results_checked()
@@ -64,8 +67,6 @@ class _CommandFemSolverRun(FemCommands):
                 return
             self.fea.finished.connect(load_results)
             QtCore.QThreadPool.globalInstance().start(self.fea)
-        elif self.solver.SolverType == "FemSolverElmer":
-            self._newActivated()
         elif self.solver.SolverType == "FemSolverZ88":
             import FemToolsZ88
             self.fea = FemToolsZ88.FemToolsZ88(None, self.solver)
@@ -83,9 +84,10 @@ class _CommandFemSolverRun(FemCommands):
     def _newActivated(self):
         solver = self._getSelectedSolver()
         if solver is not None:
-            machine = FemSolve.getMachine(solver)
-            machine.target = FemSolve.RESULTS
+            machine = FemRun.getMachine(solver)
             if not machine.running:
+                machine.reset()
+                machine.target = FemRun.RESULTS
                 machine.start()
 
     def _getSelectedSolver(self):

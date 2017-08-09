@@ -36,10 +36,10 @@ import FemProxy
 
 class Proxy(object):
 
-    BaseType = "App::ConstraintPython"
+    BaseType = "Fem::ConstraintPython"
 
     def __init__(self, obj):
-        super(Proxy, self).__init__(obj)
+        obj.Proxy = self
 
 
 class ViewProxy(object):

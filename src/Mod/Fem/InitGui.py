@@ -48,6 +48,7 @@ class FemWorkbench (Workbench):
         import FemCommands.AddSolverElmer
         import FemCommands.AddEquation
         import FemCommands.AddConstraintBodyHeatFlux
+        import FemCommands.AddConstraintFlowVelocity
 
         import PyGui._CommandFemAnalysis
         import PyGui._CommandFemConstraintSelfWeight

@@ -109,6 +109,8 @@ INSTALL(
         FemConstraints/__init__.py
         FemConstraints/ConstraintBase.py
         FemConstraints/BodyHeatFlux.py
+	FemConstraints/FlowVelocity.py
+	FemConstraints/FlowVelocityTask.ui
     DESTINATION
         Mod/Fem/FemConstraints
 )
@@ -119,6 +121,7 @@ INSTALL(
         FemCommands/AddSolverElmer.py
         FemCommands/AddEquation.py
         FemCommands/AddConstraintBodyHeatFlux.py
+	FemCommands/AddConstraintFlowVelocity.py
     DESTINATION
         Mod/Fem/FemConstraints
 )

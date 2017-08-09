@@ -150,6 +150,8 @@ SET(FemConstraintsPy_SRCS
     FemConstraints/__init__.py
     FemConstraints/ConstraintBase.py
     FemConstraints/BodyHeatFlux.py
+    FemConstraints/FlowVelocity.py
+    FemConstraints/FlowVelocityTask.ui
 )
 
 SET(FemCommands_SRCS
@@ -157,6 +159,7 @@ SET(FemCommands_SRCS
     FemCommands/AddSolverElmer.py
     FemCommands/AddEquation.py
     FemCommands/AddConstraintBodyHeatFlux.py
+    FemCommands/AddConstraintFlowVelocity.py
 )
 
 SET(FemGuiScripts_SRCS

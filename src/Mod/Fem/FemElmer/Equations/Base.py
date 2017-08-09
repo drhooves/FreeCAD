@@ -77,15 +77,16 @@ class _TaskPanel(object):
             self.form = [self.refWidget, propWidget]
         analysis = FemMisc.findAnalysisOfMember(obj)
         self._mesh = FemMisc.getSingleMember(analysis, "Fem::FemMeshObject")
-        self._part = self._mesh.Part
+        self._part = self._mesh.Part if self._mesh is not None else None
         self._partVisible = None
         self._meshVisible = None
 
     def open(self):
-        self._meshVisible = self._mesh.ViewObject.isVisible()
-        self._partVisible = self._part.ViewObject.isVisible()
-        self._mesh.ViewObject.hide()
-        self._part.ViewObject.show()
+        if self._mesh is not None and self._part is not None:
+            self._meshVisible = self._mesh.ViewObject.isVisible()
+            self._partVisible = self._part.ViewObject.isVisible()
+            self._mesh.ViewObject.hide()
+            self._part.ViewObject.show()
 
     def reject(self):
         self._restoreVisibility()
@@ -99,11 +100,12 @@ class _TaskPanel(object):
         return True
 
     def _restoreVisibility(self):
-        if self._meshVisible:
-            self._mesh.ViewObject.show()
-        else:
-            self._mesh.ViewObject.hide()
-        if self._partVisible:
-            self._part.ViewObject.show()
-        else:
-            self._part.ViewObject.hide()
+        if self._mesh is not None and self._part is not None:
+            if self._meshVisible:
+                self._mesh.ViewObject.show()
+            else:
+                self._mesh.ViewObject.hide()
+            if self._partVisible:
+                self._part.ViewObject.show()
+            else:
+                self._part.ViewObject.hide()

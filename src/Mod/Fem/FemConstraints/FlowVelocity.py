@@ -43,6 +43,8 @@ def create(doc, name="Velocity"):
 
 class Proxy(ConstraintBase.Proxy):
 
+    Type = "Fem::ConstraintFlowVelocity"
+
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
         obj.addProperty(

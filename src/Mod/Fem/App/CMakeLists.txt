@@ -136,6 +136,13 @@ SET(FemElmer_SRCS
     FemElmer/sifio.py
 )
 
+SET(FemCalculix_SRCS
+    FemCalculix/__init__.py
+    FemCalculix/SolverObject.py
+    FemCalculix/Tasks.py
+    FemCalculix/Writer.py
+)
+
 SET(FemEquationsElmer_SRCS
     FemElmer/Equations/__init__.py
     FemElmer/Equations/Base.py
@@ -363,6 +370,7 @@ fc_target_copy_resource(Fem
     ${FemGuiScripts_SRCS}
     ${FemTests_SRCS}
     ${FemElmer_SRCS}
+    ${FemCalculix_SRCS}
     ${FemEquationsElmer_SRCS}
     ${FemConstraintsPy_SRCS}
     ${FemCommands_SRCS}

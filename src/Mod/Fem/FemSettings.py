@@ -63,6 +63,11 @@ _BINARIES = {
         param=_ELMER_PARAM,
         useDefault="UseStandardGridLocation",
         customPath="gridBinaryPath"),
+    "Calculix": _BinaryDlg(
+        default="ccx",
+        param=_CCX_PARAM,
+        useDefault="UseStandardCcxLocation",
+        customPath="ccxBinaryPath"),
 }
 
 

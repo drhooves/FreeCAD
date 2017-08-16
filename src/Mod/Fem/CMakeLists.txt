@@ -86,9 +86,18 @@ INSTALL(
         FemElmer/SolverObject.py
         FemElmer/Tasks.py
         FemElmer/Writer.py
-        FemElmer/sifio.py
     DESTINATION
         Mod/Fem/FemElmer
+)
+
+INSTALL(
+    FILES
+        FemCalculix/__init__.py
+        FemCalculix/SolverObject.py
+        FemCalculix/Tasks.py
+        FemCalculix/Writer.py
+    DESTINATION
+        Mod/Fem/FemCalculix
 )
 
 INSTALL(

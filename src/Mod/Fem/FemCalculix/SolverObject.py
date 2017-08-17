@@ -55,6 +55,7 @@ class Proxy(FemSolverObject.Proxy):
     Type = "Fem::FemSolverObjectCalculix"
 
     def __init__(self, obj):
+        super(Proxy, self).__init__(obj)
         obj.Proxy = self
 
         # fem_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")  # not needed ATM

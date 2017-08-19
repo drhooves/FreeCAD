@@ -105,6 +105,16 @@ INSTALL(
 
 INSTALL(
     FILES
+        FemZ88/__init__.py
+        FemZ88/SolverObject.py
+        FemZ88/Tasks.py
+        FemZ88/Writer.py
+    DESTINATION
+        Mod/Fem/FemZ88
+)
+
+INSTALL(
+    FILES
         FemElmer/Equations/__init__.py
         FemElmer/Equations/Base.py
         FemElmer/Equations/Linear.py

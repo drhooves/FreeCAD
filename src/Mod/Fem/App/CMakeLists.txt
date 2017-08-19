@@ -162,6 +162,13 @@ SET(FemCalculix_SRCS
     FemCalculix/Writer.py
 )
 
+SET(FemZ88_SRCS
+    FemZ88/__init__.py
+    FemZ88/SolverObject.py
+    FemZ88/Tasks.py
+    FemZ88/Writer.py
+)
+
 SET(FemGuiScripts_SRCS
     PyGui/FemCommands.py
     PyGui/__init__.py
@@ -373,6 +380,7 @@ fc_target_copy_resource(Fem
     ${FemSolver_SRCS}
     ${FemElmer_SRCS}
     ${FemCalculix_SRCS}
+    ${FemZ88_SRCS}
     ${FemEquationsElmer_SRCS}
     )
 

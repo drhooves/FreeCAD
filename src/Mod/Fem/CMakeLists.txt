@@ -128,6 +128,16 @@ INSTALL(
 
 INSTALL(
     FILES
+        FemZ88/__init__.py
+        FemZ88/SolverObject.py
+        FemZ88/Tasks.py
+        FemZ88/Writer.py
+    DESTINATION
+        Mod/Fem/FemZ88
+)
+
+INSTALL(
+    FILES
         PyGui/FemCommands.py
         PyGui/__init__.py
         PyGui/_CommandFemSolverElmer.py

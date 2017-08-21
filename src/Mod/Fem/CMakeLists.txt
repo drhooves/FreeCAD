@@ -50,8 +50,8 @@ INSTALL(
         FemTask.py
         FemSolverObject.py
         FemEquation.py
-	FemRun.py
-	FemSelectionWidgets.py
+        FemRun.py
+        FemSelectionWidgets.py
         FemSignal.py
         FemConstraint.py
         TestFem.py
@@ -64,7 +64,7 @@ INSTALL(
         PyObjects/__init__.py
         PyObjects/_FemConstraintSelfWeight.py
         PyObjects/_FemConstraintBodyHeatFlux.py
-	PyObjects/_FemConstraintFlowVelocity.py
+        PyObjects/_FemConstraintFlowVelocity.py
         PyObjects/_FemElementFluid1D.py
         PyObjects/_FemElementGeometry1D.py
         PyObjects/_FemElementGeometry2D.py
@@ -111,7 +111,7 @@ INSTALL(
         FemElmer/Equations/Nonlinear.py
         FemElmer/Equations/Elasticity.py
         FemElmer/Equations/Heat.py
-	FemElmer/Equations/Flow.py
+        FemElmer/Equations/Flow.py
     DESTINATION
         Mod/Fem/FemElmer/Equations
 )
@@ -120,10 +120,10 @@ INSTALL(
     FILES
         PyGui/FemCommands.py
         PyGui/__init__.py
-	PyGui/_CommandFemSolverElmer.py
-	PyGui/_CommandFemEquation.py
-	PyGui/_CommandFemConstraintBodyHeatFlux.py
-	PyGui/_CommandFemConstraintFlowVelocity.py
+        PyGui/_CommandFemSolverElmer.py
+        PyGui/_CommandFemEquation.py
+        PyGui/_CommandFemConstraintBodyHeatFlux.py
+        PyGui/_CommandFemConstraintFlowVelocity.py
         PyGui/_CommandFemAnalysis.py
         PyGui/_CommandFemConstraintSelfWeight.py
         PyGui/_CommandFemElementFluid1D.py
@@ -158,8 +158,8 @@ INSTALL(
         PyGui/_TaskPanelFemSolverCalculix.py
         PyGui/_TaskPanelFemSolverControl.py
         PyGui/_ViewProviderFemConstraintSelfWeight.py
-	PyGui/_ViewProviderFemConstraintBodyHeatFlux.py
-	PyGui/_ViewProviderFemConstraintFlowVelocity.py
+        PyGui/_ViewProviderFemConstraintBodyHeatFlux.py
+        PyGui/_ViewProviderFemConstraintFlowVelocity.py
         PyGui/_ViewProviderFemElementFluid1D.py
         PyGui/_ViewProviderFemElementGeometry1D.py
         PyGui/_ViewProviderFemElementGeometry2D.py
@@ -180,11 +180,11 @@ INSTALL(
         PyGui/TaskPanelFemMeshBoundaryLayer.ui
         PyGui/TaskPanelFemMeshGmsh.ui
         PyGui/TaskPanelFemMeshGroup.ui
-	PyGui/TaskPanelFemMeshGroupXDMFExport.ui
+        PyGui/TaskPanelFemMeshGroupXDMFExport.ui
         PyGui/TaskPanelFemMeshRegion.ui
         PyGui/TaskPanelFemResultShow.ui
         PyGui/TaskPanelFemSolverCalculix.ui
-	PyGui/TaskPanelFemFlowVelocity.ui
+        PyGui/TaskPanelFemFlowVelocity.ui
     DESTINATION
         Mod/Fem/PyGui
 )

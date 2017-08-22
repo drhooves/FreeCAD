@@ -94,7 +94,6 @@ SET(FemScripts_SRCS
     FemSelectionObserver.py
     FemTools.py
     FemToolsCcx.py
-    FemToolsZ88.py
     ObjectsFem.py
     FemReport.py
     FemReportDialog.py
@@ -127,7 +126,6 @@ SET(FemObjectsScripts_SRCS
     PyObjects/_FemMeshRegion.py
     PyObjects/_FemResultMechanical.py
     PyObjects/_FemSolverCalculix.py
-    PyObjects/_FemSolverZ88.py
     PyObjects/_FemMaterial.py
 )
 

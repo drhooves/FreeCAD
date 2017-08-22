@@ -42,7 +42,6 @@ INSTALL(
         FemSelectionObserver.py
         FemTools.py
         FemToolsCcx.py
-        FemToolsZ88.py
         ObjectsFem.py
         FemReport.py
         FemReportDialog.py
@@ -77,7 +76,6 @@ INSTALL(
         PyObjects/_FemMeshResult.py
         PyObjects/_FemResultMechanical.py
         PyObjects/_FemSolverCalculix.py
-        PyObjects/_FemSolverZ88.py
         PyObjects/_FemMaterial.py
     DESTINATION
         Mod/Fem/PyObjects

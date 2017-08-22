@@ -26,7 +26,9 @@ __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
 
 
-from pivy import coin
+import FreeCAD
+if FreeCAD.GuiUp:
+    from pivy import coin
 
 
 class Proxy(object):

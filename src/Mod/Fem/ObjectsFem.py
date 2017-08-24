@@ -331,14 +331,21 @@ def makeResultMechanical(name="MechanicalResult"):
 
 
 ########## solver objects ##########
-def makeSolverCalculix(name="CalculiX"):
-    '''makeSolverCalculix(name): makes a Calculix solver object'''
+def makeSolverCalculixOld(name="CalculiX"):
+    '''makeSolverCalculixOld(name): makes a Calculix solver object'''
     obj = FreeCAD.ActiveDocument.addObject("Fem::FemSolverObjectPython", name)
     import PyObjects._FemSolverCalculix
     PyObjects._FemSolverCalculix._FemSolverCalculix(obj)
     if FreeCAD.GuiUp:
         import PyGui._ViewProviderFemSolverCalculix
         PyGui._ViewProviderFemSolverCalculix._ViewProviderFemSolverCalculix(obj.ViewObject)
+    return obj
+
+
+def makeSolverCalculix(name="SolverCalculiX"):
+    '''makeSolverCalculix(name): makes a Calculix solver object'''
+    import FemCalculix.SolverObject
+    obj = FemCalculix.SolverObject.create(FreeCAD.ActiveDocument, name)
     return obj
 
 

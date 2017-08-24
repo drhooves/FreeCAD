@@ -54,9 +54,10 @@ class _CommandFemSolverRun(FemCommands):
         sel = FreeCADGui.Selection.getSelection()
         if len(sel) == 1 and sel[0].isDerivedFrom("Fem::FemSolverObjectPython"):
             self.solver = sel[0]
+
         if FemMisc.isDerivedFrom(self.solver, "Fem::FemSolverObjectElmer"):
             self._newActivated()
-        if FemMisc.isDerivedFrom(self.solver, "Fem::FemSolverObjectCalculix"):
+        elif FemMisc.isDerivedFrom(self.solver, "Fem::FemSolverObjectCalculix"):
             self._newActivated()
         elif FemMisc.isDerivedFrom(self.solver, "Fem::FemSolverObjectZ88"):
             self._newActivated()

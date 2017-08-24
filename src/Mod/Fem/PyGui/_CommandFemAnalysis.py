@@ -49,7 +49,13 @@ class _CommandFemAnalysis(FemCommands):
         FreeCADGui.addModule("ObjectsFem")
         FreeCADGui.doCommand("ObjectsFem.makeAnalysis('Analysis')")
         FreeCADGui.doCommand("FemGui.setActiveAnalysis(App.activeDocument().ActiveObject)")
-        FreeCADGui.doCommand("ObjectsFem.makeSolverCalculix('CalculiX')")
+        ccx_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/Ccx")
+        use_old_solver_frame_work = ccx_prefs.GetBool("useOldSolverFrameWork", False)
+        use_new_solver_frame_work = ccx_prefs.GetBool("useNewSolverFrameWork", True)
+        if use_old_solver_frame_work and not use_new_solver_frame_work:
+            FreeCADGui.doCommand("ObjectsFem.makeSolverCalculixOld()")
+        else:
+            FreeCADGui.doCommand("ObjectsFem.makeSolverCalculix()")
         FreeCADGui.doCommand("FemGui.getActiveAnalysis().Member = FemGui.getActiveAnalysis().Member + [App.activeDocument().ActiveObject]")
         sel = FreeCADGui.Selection.getSelection()
         if (len(sel) == 1):

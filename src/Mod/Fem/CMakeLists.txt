@@ -85,13 +85,35 @@ INSTALL(
 
 INSTALL(
     FILES
-        FemElmer/__init__.py
-        FemElmer/sifio.py
-        FemElmer/SolverObject.py
-        FemElmer/Tasks.py
-        FemElmer/Writer.py
+        FemSolver/__init__.py
+        FemSolver/SolverBase.py
+        FemSolver/EquationBase.py
     DESTINATION
-        Mod/Fem/FemElmer
+    Mod/Fem/FemSolver
+)
+
+INSTALL(
+    FILES
+        FemSolver/Elmer/__init__.py
+        FemSolver/Elmer/sifio.py
+        FemSolver/Elmer/Object.py
+        FemSolver/Elmer/Tasks.py
+        FemSolver/Elmer/Writer.py
+    DESTINATION
+    Mod/Fem/FemSolver/Elmer
+)
+
+INSTALL(
+    FILES
+        FemSolver/Elmer/Equations/__init__.py
+        FemSolver/Elmer/Equations/Base.py
+        FemSolver/Elmer/Equations/Linear.py
+        FemSolver/Elmer/Equations/Nonlinear.py
+        FemSolver/Elmer/Equations/Elasticity.py
+        FemSolver/Elmer/Equations/Heat.py
+        FemSolver/Elmer/Equations/Flow.py
+    DESTINATION
+        Mod/Fem/FemSolver/Elmer/Equations
 )
 
 INSTALL(
@@ -102,19 +124,6 @@ INSTALL(
         FemCalculix/Writer.py
     DESTINATION
         Mod/Fem/FemCalculix
-)
-
-INSTALL(
-    FILES
-        FemElmer/Equations/__init__.py
-        FemElmer/Equations/Base.py
-        FemElmer/Equations/Linear.py
-        FemElmer/Equations/Nonlinear.py
-        FemElmer/Equations/Elasticity.py
-        FemElmer/Equations/Heat.py
-        FemElmer/Equations/Flow.py
-    DESTINATION
-        Mod/Fem/FemElmer/Equations
 )
 
 INSTALL(

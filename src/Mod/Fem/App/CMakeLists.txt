@@ -90,7 +90,6 @@ SET(FemScripts_SRCS
     FemMeshTools.py
     FemResultTools.py
     FemSelectionObserver.py
-    FemTools.py
     FemToolsCcx.py
     ObjectsFem.py
     FemReport.py

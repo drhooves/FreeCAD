@@ -346,7 +346,7 @@ class FemToolsCcx(QtCore.QRunnable, QtCore.QObject):
             mat_obj = m['Object']
             if mat_obj.Category == 'Solid':
                 if 'YoungsModulus' in mat_map:
-                    # print Units.Quantity(mat_map['YoungsModulus']).Value
+                    # print(Units.Quantity(mat_map['YoungsModulus']).Value)
                     if not Units.Quantity(mat_map['YoungsModulus']).Value:
                         message += "Value of YoungsModulus is set to 0.0.\n"
                 else:
@@ -723,8 +723,8 @@ class FemToolsCcx(QtCore.QRunnable, QtCore.QObject):
             nonpositive_jacobian_elenodes = []
             for line in self.ccx_stdout.splitlines():
                 if 'determinant in element' in line:
-                    # print line
-                    # print line.split()
+                    # print(line)
+                    # print(line.split())
                     non_posjac_ele = int(line.split()[3])
                     # print(non_posjac_ele)
                     if non_posjac_ele not in nonpositive_jacobian_elements:

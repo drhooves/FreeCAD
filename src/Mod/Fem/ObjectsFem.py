@@ -344,7 +344,9 @@ def makeSolverCalculixOld(name="CalculiX"):
 
 def makeSolverCalculix(name="SolverCalculiX"):
     '''makeSolverCalculix(name): makes a Calculix solver object'''
+    print('import solver module')
     import FemCalculix.SolverObject
+    print('call creating the solver object')
     obj = FemCalculix.SolverObject.create(FreeCAD.ActiveDocument, name)
     return obj
 

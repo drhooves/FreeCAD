@@ -151,6 +151,16 @@ def makeConstraintInitialFlowVelocity(name="InitialFlowVelocity"):
     return obj
 
 
+def makeConstraintElectrostaticPotential(name="ElectrostaticPotential"):
+    obj = FreeCAD.ActiveDocument.addObject("Fem::ConstraintPython", name)
+    import PyObjects._FemConstraintElectrostaticPotential
+    PyObjects._FemConstraintElectrostaticPotential.Proxy(obj)
+    if FreeCAD.GuiUp:
+        import PyGui._ViewProviderFemConstraintElectrostaticPotential
+        PyGui._ViewProviderFemConstraintElectrostaticPotential.ViewProxy(obj.ViewObject)
+    return obj
+
+
 def makeConstraintTemperature(name="ConstraintTemperature"):
     '''makeConstraintTemperature(name): makes a Fem ConstraintTemperature object'''
     obj = FreeCAD.ActiveDocument.addObject("Fem::ConstraintTemperature", name)

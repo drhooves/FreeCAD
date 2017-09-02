@@ -63,6 +63,7 @@ INSTALL(
         PyObjects/_FemConstraintBodyHeatFlux.py
         PyObjects/_FemConstraintFlowVelocity.py
         PyObjects/_FemConstraintInitialFlowVelocity.py
+        PyObjects/_FemConstraintElectrostaticPotential.py
         PyObjects/_FemElementFluid1D.py
         PyObjects/_FemElementGeometry1D.py
         PyObjects/_FemElementGeometry2D.py
@@ -142,6 +143,7 @@ INSTALL(
         PyGui/_CommandFemConstraintBodyHeatFlux.py
         PyGui/_CommandFemConstraintFlowVelocity.py
         PyGui/_CommandFemConstraintInitialFlowVelocity.py
+        PyGui/_CommandFemConstraintElectrostaticPotential.py
         PyGui/_CommandFemAnalysis.py
         PyGui/_CommandFemConstraintSelfWeight.py
         PyGui/_CommandFemElementFluid1D.py
@@ -179,6 +181,7 @@ INSTALL(
         PyGui/_ViewProviderFemConstraintBodyHeatFlux.py
         PyGui/_ViewProviderFemConstraintFlowVelocity.py
         PyGui/_ViewProviderFemConstraintInitialFlowVelocity.py
+        PyGui/_ViewProviderFemConstraintElectrostaticPotential.py
         PyGui/_ViewProviderFemElementFluid1D.py
         PyGui/_ViewProviderFemElementGeometry1D.py
         PyGui/_ViewProviderFemElementGeometry2D.py
@@ -205,6 +208,7 @@ INSTALL(
         PyGui/TaskPanelFemSolverCalculix.ui
         PyGui/TaskPanelFemFlowVelocity.ui
         PyGui/TaskPanelFemInitialFlowVelocity.ui
+        PyGui/TaskPanelFemElectrostaticPotential.ui
     DESTINATION
         Mod/Fem/PyGui
 )

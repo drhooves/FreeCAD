@@ -294,7 +294,7 @@ class Writer(object):
                     self._addSolver(body, solverSection)
         if activeIn:
             self._handleElectrostaticConstants()
-            #self._handleElectrostaticBndConditions()
+            self._handleElectrostaticBndConditions()
             #self._handleElectrostaticInitial(activeIn)
             #self._handleElectrostaticBodyForces(activeIn)
             self._handleElectrostaticMaterial(activeIn)
@@ -333,6 +333,17 @@ class Writer(object):
                     self._material(
                         name, "Relative Permittivity",
                         float(m["RelativePermittivity"]))
+
+    def _handleElectrostaticBndConditions(self):
+        for obj in self._getMember("Fem::ConstraintElectrostaticPotential"):
+            if obj.References:
+                for name in obj.References[0][1]:
+                    if obj.Potential:
+                        potential = getFromUi(obj.Potential, "kg*m^2/(s^3*A)", "M*L^2/(T^3 * I)")
+                        self._boundary(name, "Potential", potential)
+                    if obj.PotentialConstant:
+                        self._boundary(name, "Potential Constant", True)
+                self._handled(obj)
 
 
     def _handleElasticity(self):

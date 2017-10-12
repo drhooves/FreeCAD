@@ -107,6 +107,7 @@ class Writer(object):
         self._handleHeat()
         self._handleElasticity()
         self._handleElectrostatic()
+        self._handleFluxsolver()
         self._handleFlow()
         self._addOutputSolver()
 
@@ -306,7 +307,7 @@ class Writer(object):
         s["Variable"] = self._getUniqueVarName("Potential")
         s["Variable DOFs"] = 1
         s["Calculate Electric Field"] = equation.CalculateElectricField
-        s["Calculate Electric Flux"] = equation.CalculateElectricFlux
+        #s["Calculate Electric Flux"] = equation.CalculateElectricFlux
         s["Calculate Electric Energy"] = equation.CalculateElectricEnergy
         s["Calculate Surface Charge"] = equation.CalculateSurfaceCharge
         s["Displace mesh"] = False
@@ -344,6 +345,33 @@ class Writer(object):
                     if obj.PotentialConstant:
                         self._boundary(name, "Potential Constant", True)
                 self._handled(obj)
+
+
+
+
+    def _handleFluxsolver(self):
+        activeIn = []
+        for equation in self.solver.Group:
+            if FemMisc.isOfType(equation, "Fem::FemEquationElmerFluxsolver"):
+                if equation.References:
+                    activeIn = equation.References[0][1]
+                else:
+                    activeIn = self._getAllBodies()
+                solverSection = self._getFluxsolverSolver(equation)
+                for body in activeIn:
+                    self._addSolver(body, solverSection)
+
+    def _getFluxsolverSolver(self, equation):
+        s = self._createLinearSolver(equation)
+        s["Equation"] = "Flux Solver" # equation.Name
+        s["Procedure"] = sifio.FileAttr("FluxSolver/FluxSolver")
+        s["Flux Variable"] = equation.FluxVariable
+        s["Calculate Flux"] = equation.CalculateFlux
+        s["Calculate Grad"] = equation.CalculateGrad
+        return s
+
+
+
 
 
     def _handleElasticity(self):

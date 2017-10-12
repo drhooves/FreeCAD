@@ -34,6 +34,7 @@ import Tasks
 import Equations.Heat
 import Equations.Elasticity
 import Equations.Electrostatic
+import Equations.Fluxsolver
 import Equations.Flow
 
 
@@ -51,6 +52,7 @@ class Proxy(FemSolver.SolverBase.Proxy):
         "Heat": Equations.Heat,
         "Elasticity": Equations.Elasticity,
         "Electrostatic": Equations.Electrostatic,
+        "Fluxsolver": Equations.Fluxsolver,
         "Flow": Equations.Flow,
     }
 

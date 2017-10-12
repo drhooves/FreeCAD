@@ -96,6 +96,19 @@ class Electrostatic(_Base):
         }
 
 
+class Fluxsolver(_Base):
+
+    def getSpecifier(self):
+        return "Fluxsolver"
+
+    def GetResources(self):
+        return {
+            'Pixmap': 'fem-equation-fluxsolver',
+            'MenuText': "Flux Solver Equation",
+            'ToolTip': "Creates a FEM equation for solving the flux and gradient"
+        }
+
+
 class Flow(_Base):
 
     def getSpecifier(self):
@@ -112,4 +125,5 @@ class Flow(_Base):
 Gui.addCommand('FEM_AddEquationHeat', Heat())
 Gui.addCommand('FEM_AddEquationElasticity', Elasticity())
 Gui.addCommand('FEM_AddEquationElectrostatic', Electrostatic())
+Gui.addCommand('FEM_AddEquationFluxsolver', Fluxsolver())
 Gui.addCommand('FEM_AddEquationFlow', Flow())
